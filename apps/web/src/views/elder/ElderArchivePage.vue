@@ -129,10 +129,10 @@ const futureScope = ["正式合同工作流", "缴费、账单和审批流", "�
     </article>
 
     <section class="metrics-grid metrics-grid-archive" aria-label="长者档案指标">
-      <StatCard label="档案总数" :value="summary.total" helper="覆盖档案、入住与家属关系" />
-      <StatCard label="已入住" :value="summary.checkedIn" helper="当前可服务长者" />
-      <StatCard label="待入住" :value="summary.waitingCheckIn" helper="待安排床位或资料完善" />
-      <StatCard label="高风险" :value="summary.highRisk" helper="需重点关注" />
+      <StatCard :stat="{ label: '档案总数', value: summary.total, helper: '覆盖档案、入住与家属关系' }" />
+      <StatCard :stat="{ label: '已入住', value: summary.checkedIn, helper: '当前可服务长者' }" />
+      <StatCard :stat="{ label: '待入住', value: summary.waitingCheckIn, helper: '待安排床位或资料完善' }" />
+      <StatCard :stat="{ label: '高风险', value: summary.highRisk, helper: '需重点关注' }" />
     </section>
 
     <section class="content-grid">
@@ -193,6 +193,27 @@ const futureScope = ["正式合同工作流", "缴费、账单和审批流", "�
             />
           </label>
           <label>
+            站点编码
+            <input
+              :value="filters.stationId"
+              type="text"
+              placeholder="station-heping-001"
+              @input="emit('update:filters', { stationId: $event.target.value })"
+            />
+          </label>
+          <label>
+            档案状态
+            <select
+              :value="filters.profileStatus"
+              @change="emit('update:filters', { profileStatus: $event.target.value })"
+            >
+              <option value="">全部</option>
+              <option value="active">启用</option>
+              <option value="inactive">停用</option>
+              <option value="archived">归档</option>
+            </select>
+          </label>
+          <label>
             风险等级
             <select :value="filters.riskLevel" @change="emit('update:filters', { riskLevel: $event.target.value })">
               <option value="">全部</option>
@@ -238,7 +259,7 @@ const futureScope = ["正式合同工作流", "缴费、账单和审批流", "�
           >
             <div>
               <strong>{{ elder.fullName }}</strong>
-              <p>{{ elder.elderCode }} · {{ elder.gender }} · {{ elder.age }} 岁</p>
+              <p>{{ elder.elderCode }} · {{ elder.gender }} · {{ elder.age }} 岁 · {{ elder.stationId }}</p>
             </div>
             <div class="archive-row__meta">
               <span class="tag tag-p2">{{ elder.riskLevel }}</span>
@@ -258,7 +279,7 @@ const futureScope = ["正式合同工作流", "缴费、账单和审批流", "�
           <div>
             <span class="detail-label">档案编号</span>
             <strong>{{ selectedElder.elderCode }}</strong>
-            <small>{{ selectedElder.elderId }}</small>
+            <small>{{ selectedElder.elderId }} · {{ selectedElder.profileStatusLabel }}</small>
           </div>
           <div>
             <span class="detail-label">风险等级</span>
@@ -278,7 +299,7 @@ const futureScope = ["正式合同工作流", "缴费、账单和审批流", "�
           <div>
             <span class="detail-label">入住日期</span>
             <strong>{{ selectedElder.checkInDate }}</strong>
-            <small>{{ selectedElder.note }}</small>
+            <small>{{ selectedElder.admissionId }} · {{ selectedElder.note }}</small>
           </div>
           <div>
             <span class="detail-label">主联系人</span>
