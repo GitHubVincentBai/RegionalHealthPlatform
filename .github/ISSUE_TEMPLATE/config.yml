@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Architecture And Delivery Guidance
+    url: https://github.com/<GITHUB_OWNER>/<GITHUB_REPO>/blob/main/docs/agents/MasterAgent.md
+    about: Read the master agent workflow before creating new work items.

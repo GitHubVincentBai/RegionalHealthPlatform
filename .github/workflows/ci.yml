@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "feat/**"
+      - "fix/**"
+      - "refactor/**"
+      - "docs/**"
+      - "chore/**"
+
+jobs:
+  verify:
+    name: Verify Repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        if: ${{ hashFiles('apps/web/package.json') != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Python
+        if: ${{ hashFiles('services/python/elder-service/pyproject.toml') != '' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Go
+        if: ${{ hashFiles('services/go/iot-gateway/go.mod') != '' }}
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: services/go/iot-gateway/go.mod
+
+      - name: Verify Frontend Skeleton
+        if: ${{ hashFiles('apps/web/package.json') != '' }}
+        run: |
+          npm --prefix apps/web run format
+          npm --prefix apps/web run lint
+          npm --prefix apps/web run test
+          npm --prefix apps/web run build
+
+      - name: Verify Python Skeleton
+        if: ${{ hashFiles('services/python/elder-service/pyproject.toml') != '' }}
+        run: |
+          PYTHONPATH=services/python/elder-service/src python -m compileall services/python/elder-service/src
+          PYTHONPATH=services/python/elder-service/src python -m unittest discover -s services/python/elder-service/tests
+
+      - name: Verify Go Skeleton
+        if: ${{ hashFiles('services/go/iot-gateway/go.mod') != '' }}
+        run: |
+          cd services/go/iot-gateway
+          gofmt -w $(find . -name '*.go' -type f)
+          go vet ./...
+          go test ./...
+          go build ./...
+
+      - name: Run unified verification
+        run: make verify

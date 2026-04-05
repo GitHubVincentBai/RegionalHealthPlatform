@@ -1,0 +1,77 @@
+export function elderArchiveModel() {
+  return {
+    summary: {
+      total: 24,
+      checkedIn: 18,
+      waitingCheckIn: 4,
+      highRisk: 6,
+    },
+    elders: [
+      {
+        elderId: "E-1001",
+        elderCode: "HPT-EL-001",
+        fullName: "张桂兰",
+        gender: "女",
+        age: 82,
+        riskLevel: "高风险",
+        status: "已入住",
+        station: "龙湖邻里中心",
+        room: "A-301",
+        bed: "A-301-02",
+        family: "张伟",
+        familyRelation: "子女",
+        checkInDate: "2025-03-12",
+        note: "血压波动较大，优先级较高。",
+      },
+      {
+        elderId: "E-1002",
+        elderCode: "HPT-EL-002",
+        fullName: "李秀英",
+        gender: "女",
+        age: 76,
+        riskLevel: "中风险",
+        status: "待入住",
+        station: "和平街社区站点",
+        room: "B-208",
+        bed: "B-208-01",
+        family: "李强",
+        familyRelation: "子女",
+        checkInDate: "待安排",
+        note: "已完成资料审核，待床位确认。",
+      },
+      {
+        elderId: "E-1003",
+        elderCode: "HPT-EL-003",
+        fullName: "王德福",
+        gender: "男",
+        age: 88,
+        riskLevel: "高风险",
+        status: "已入住",
+        station: "三好街站点",
+        room: "C-108",
+        bed: "C-108-03",
+        family: "王敏",
+        familyRelation: "女儿",
+        checkInDate: "2025-04-01",
+        note: "晚间需重点巡视。",
+      },
+    ],
+  };
+}
+
+export function createElderDraft() {
+  return {
+    elderCode: "",
+    fullName: "",
+    gender: "女",
+    age: 80,
+    riskLevel: "中风险",
+    station: "龙湖邻里中心",
+    room: "",
+    bed: "",
+    familyName: "",
+    familyRelation: "子女",
+    checkInDate: "",
+    note: "",
+  };
+}

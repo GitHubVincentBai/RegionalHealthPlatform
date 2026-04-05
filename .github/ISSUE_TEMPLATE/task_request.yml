@@ -1,0 +1,52 @@
+name: Engineering Task
+description: Create a delivery task for design, implementation, testing, or DevOps work
+title: "[Task] "
+labels:
+  - type:task
+  - status:triage
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      placeholder: Describe the task objective in one or two paragraphs.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: workstream
+    attributes:
+      label: Workstream
+      options:
+        - architecture
+        - frontend
+        - go-backend
+        - python-backend
+        - devops
+        - testing
+        - cross-functional
+    validations:
+      required: true
+
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Deliverables
+      placeholder: List the expected outputs, files, docs, code, or workflows.
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      placeholder: Describe how the result should be validated.
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      placeholder: Add constraints, references, or supporting context.
+

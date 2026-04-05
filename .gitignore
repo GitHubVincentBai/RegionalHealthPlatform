@@ -1,0 +1,83 @@
+# macOS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+tmp/
+.tmp/
+.cache/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Node.js / Frontend
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+.next/
+.nuxt/
+.turbo/
+coverage/
+storybook-static/
+dist-ssr/
+
+# Go
+bin/
+pkg/
+*.test
+coverage.out
+
+# OS / archives / generated assets
+*.zip
+*.tar
+*.gz
+*.rar
+
+# Runtime / local data
+*.pid
+*.seed
+*.sqlite
+*.db
+
+# Secrets and keys
+*.pem
+*.key
+*.crt
+secrets/
+
+# Terraform / IaC
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Misc generated outputs
+out/
+reports/
+artifacts/

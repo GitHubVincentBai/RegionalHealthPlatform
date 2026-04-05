@@ -1,0 +1,17 @@
+# Global default owners
+* @<GITHUB_OWNER>/<TEAM_OR_REVIEWER>
+
+# Core governance documents
+/AGENTS.md @<GITHUB_OWNER>/<ARCH_TEAM>
+/docs/agents/MasterAgent.md @<GITHUB_OWNER>/<ARCH_TEAM>
+/docs/architecture/Arch.md @<GITHUB_OWNER>/<ARCH_TEAM>
+/docs/agents/DevOpsAgent.md @<GITHUB_OWNER>/<DEVOPS_TEAM>
+/docs/agents/FrontAgent.md @<GITHUB_OWNER>/<FRONTEND_TEAM>
+/docs/agents/GoAgent.md @<GITHUB_OWNER>/<GO_TEAM>
+/docs/agents/PythonAgent.md @<GITHUB_OWNER>/<PYTHON_TEAM>
+/docs/agents/TestAgent.md @<GITHUB_OWNER>/<QA_TEAM>
+/docs/governance/ @<GITHUB_OWNER>/<ARCH_TEAM>
+/docs/product/ @<GITHUB_OWNER>/<ARCH_TEAM>
+
+# GitHub governance
+/.github/ @<GITHUB_OWNER>/<DEVOPS_TEAM>
