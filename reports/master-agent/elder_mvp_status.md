@@ -1,11 +1,11 @@
 # MasterAgent 5 分钟监督汇报
 
-- 生成时间: 2026-04-05 20:12:59 CST
+- 生成时间: 2026-04-05 20:18:14 CST
 - 分支: `codex/elder-list-query`
 - 任务包: [docs/product/Elder入住首批任务包.md](/Users/baizhiwen/MICROWARE/Git/RegionalHealthPlatform/docs/product/Elder入住首批任务包.md)
 - `make verify`: 通过
 - 校验摘要: OK
-- 工作树变更数: 40
+- 工作树变更数: 8
 
 ## 红黄绿灯总览
 
@@ -27,25 +27,13 @@
 
 ## 当前工作树
 
-- `M .github/workflows/ci.yml`
-- `M  .gitignore`
-- ` M Makefile`
-- ` M README.md`
-- ` M apps/web/README.md`
-- ` M apps/web/scripts/format.mjs`
-- ` M apps/web/scripts/lint.mjs`
-- ` M apps/web/scripts/test.mjs`
-- ` M apps/web/src/App.vue`
-- ` M apps/web/src/modules/elder/mock.js`
-- ` M apps/web/src/modules/elder/mock.spec.mjs`
-- ` M apps/web/src/styles.css`
-- ` M apps/web/src/views/elder/ElderArchivePage.vue`
-- ` M apps/web/src/views/elder/ElderDetailPage.vue`
-- ` M apps/web/src/views/elder/ElderIntakePage.vue`
-- ` M docs/governance/AGENTS.md`
-- ` M docs/governance/repository-governance.md`
-- ` M "docs/product/Elder\345\205\245\344\275\217\351\246\226\346\211\271\344\273\273\345\212\241\345\214\205.md"`
-- ` M services/python/elder-service/README.md`
-- ` M services/python/elder-service/pyproject.toml`
+- `M  reports/master-agent/dispatch/DevOpsAgent.md`
+- `M  reports/master-agent/dispatch/FrontAgent.md`
+- `M  reports/master-agent/dispatch/MasterAgent.md`
+- `M  reports/master-agent/dispatch/PythonAgent.md`
+- `M  reports/master-agent/dispatch/TestAgent.md`
+- `M  reports/master-agent/elder_mvp_dispatch.md`
+- `M  reports/master-agent/elder_mvp_status.md`
+- `M  reports/master-agent/executor/last_result.json`
 
 报告已写入: [reports/master-agent/elder_mvp_status.md](/Users/baizhiwen/MICROWARE/Git/RegionalHealthPlatform/reports/master-agent/elder_mvp_status.md)
