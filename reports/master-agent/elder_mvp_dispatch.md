@@ -1,6 +1,6 @@
 # MasterAgent 自动派工单
 
-- 生成时间: 2026-04-05 21:51:12 CST
+- 生成时间: 2026-04-05 21:52:56 CST
 - 分支: `codex/elder-list-query`
 - 派工目标: 基于 `docs/product/Elder入住首批任务包.md` 驱动各 Agent 继续收口 Elder 入住 MVP
 
@@ -8,13 +8,13 @@
 
 | Agent | 当前状态 | 派工状态 | 依赖 | 写入范围 |
 |---|---|---|---|---|
-| `ArchAgent` | 已完成 | DONE | 无 | `docs/architecture/**; docs/product/**` |
+| `ArchAgent` | 风险 | DONE | 无 | `docs/architecture/**` |
 | `PythonAgent` | 已完成 | SUPPORT | ArchAgent | `services/python/**` |
 | `FrontAgent` | 已完成 | DONE | PythonAgent | `apps/**` |
 | `TestAgent` | 已完成 | DONE | PythonAgent、FrontAgent | `tests/**; apps/** 内测试文件; services/** 内测试文件` |
 | `DevOpsAgent` | 已完成 | DONE | TestAgent | `.github/**; deploy/**; scripts/**; Makefile; docs/governance/**` |
 | `GoAgent` | 已完成 | DONE | 无 | `services/go/**` |
-| `MasterAgent` | 已完成 | DONE | ArchAgent、PythonAgent、FrontAgent、TestAgent、DevOpsAgent、GoAgent | `reports/master-agent/**; docs/product/**; docs/agents/**` |
+| `MasterAgent` | 进行中 | DONE | ArchAgent、PythonAgent、FrontAgent、TestAgent、DevOpsAgent、GoAgent | `reports/master-agent/**; docs/product/**; docs/agents/**` |
 
 ## MasterAgent 调度顺序
 
@@ -26,12 +26,11 @@
 ### `ArchAgent`
 
 - 派工状态: `DONE`
-- 工作目标: 保持 Elder 入住 MVP 的字段边界稳定，并对齐任务包引用的字段清单路径。
-- 写入范围: `docs/architecture/**; docs/product/**`
+- 工作目标: 保持 Elder 入住 MVP 的字段边界稳定，不主动扩大范围。
+- 写入范围: `docs/architecture/**`
 - 依赖: 无
 - 待办:
   - 审阅任何新增的入住状态、床位关联或家属关系字段，防止越界到合同/费用/护理计划。
-  - 若任务包引用 `docs/product/功能页面字段集清单.md`，补齐该路径下的字段清单（可基于架构字段清单映射产出）。
   - 如果 FrontAgent 或 PythonAgent 提出模型扩展诉求，只输出边界约束，不直接代写其他栈代码。
 - 阻塞:
   - 无
@@ -52,7 +51,7 @@
   - 如联调发现字段缺口，只修改 Python 侧职责范围内的接口、模型和测试。
   - 补齐 `fastapi`/测试依赖的运行假设，确保 Python 服务依赖声明与测试入口一致。
 - 阻塞:
-  - 无
+  - 等待 ArchAgent 提供字段边界确认。
 - 完成后回传给:
   - `DevOpsAgent`
   - `TestAgent`

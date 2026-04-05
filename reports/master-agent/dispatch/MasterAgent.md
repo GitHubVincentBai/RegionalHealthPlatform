@@ -1,6 +1,6 @@
 # MasterAgent 工作单
 
-- 当前红黄绿灯状态: 已完成
+- 当前红黄绿灯状态: 进行中
 - 派工状态: DONE
 - 工作目标: 按依赖顺序驱动未完成 Agent 收口 Elder 入住 MVP，并避免互相越权改动。
 - 写入范围: `reports/master-agent/**; docs/product/**; docs/agents/**`

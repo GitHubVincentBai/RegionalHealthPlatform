@@ -1,10 +1,10 @@
 {
-  "updated_at": "2026-04-05T21:49:19+08:00",
-  "selected_agent": "ArchAgent",
-  "dispatch_state": "ACTIVE",
-  "write_scope": "docs/architecture/**; docs/product/**",
+  "updated_at": "2026-04-05T21:52:56+08:00",
+  "selected_agent": null,
+  "dispatch_state": null,
+  "write_scope": null,
   "dependencies": [],
-  "prompt_file": "/Users/baizhiwen/MICROWARE/Git/RegionalHealthPlatform/reports/master-agent/executor/prompts/20260405-214919-ArchAgent.md",
+  "prompt_file": null,
   "execute_mode": "codex-exec",
   "failure_control": {
     "threshold": 3,
@@ -27,13 +27,15 @@
         "breaker_state": "closed",
         "cooldown_seconds": 1800,
         "last_success_at": "2026-04-05T18:58:23+08:00"
+      },
+      "ArchAgent": {
+        "consecutive_failures": 0,
+        "breaker_state": "closed",
+        "cooldown_seconds": 1800,
+        "last_success_at": "2026-04-05T21:52:03+08:00"
       }
     }
   },
-  "selected_agents": [
-    "ArchAgent"
-  ],
-  "prompt_files": [
-    "/Users/baizhiwen/MICROWARE/Git/RegionalHealthPlatform/reports/master-agent/executor/prompts/20260405-214919-ArchAgent.md"
-  ]
+  "selected_agents": [],
+  "prompt_files": []
 }
