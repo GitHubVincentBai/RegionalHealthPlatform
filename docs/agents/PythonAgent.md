@@ -64,7 +64,7 @@ Python 侧优先负责以下类型能力：
 
 ## 七、开发原则
 
-- 先理解 `docs/product/PRD.md`、`docs/architecture/Arch.md`、`docs/product/Modules.md`
+- 先理解 `docs/product/PRD.md`、`docs/agents/Arch.md`、`docs/product/Modules.md`
 - 所有业务规则必须来自需求或明确标注为建议实现
 - 代码结构按领域模块拆分，不堆在一个 service 文件中
 - 输入校验、鉴权、审计、异常处理必须完整

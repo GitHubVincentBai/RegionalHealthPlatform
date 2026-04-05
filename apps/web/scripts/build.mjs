@@ -14,7 +14,7 @@ mkdirSync(distDir, { recursive: true });
 
 try {
   const { build } = await import("vite");
-  const { vue } = await import("@vitejs/plugin-vue");
+  const { default: vue } = await import("@vitejs/plugin-vue");
 
   await build({
     configFile: false,

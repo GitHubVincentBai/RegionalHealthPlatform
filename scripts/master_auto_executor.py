@@ -35,7 +35,7 @@ DEFAULT_CODEX_CANDIDATES = (
 )
 
 AGENT_GUIDES = {
-    "ArchAgent": "docs/architecture/Arch.md",
+    "ArchAgent": "docs/agents/Arch.md",
     "PythonAgent": "docs/agents/PythonAgent.md",
     "FrontAgent": "docs/agents/FrontAgent.md",
     "TestAgent": "docs/agents/TestAgent.md",

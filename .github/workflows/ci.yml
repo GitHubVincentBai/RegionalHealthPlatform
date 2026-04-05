@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -10,6 +11,8 @@ on:
       - "refactor/**"
       - "docs/**"
       - "chore/**"
+  schedule:
+    - cron: "0 */6 * * *"
 
 jobs:
   verify:
@@ -39,10 +42,19 @@ jobs:
           go-version-file: services/go/iot-gateway/go.mod
 
       - name: Run unified verification
+        id: verify
         run: make verify
 
-      - name: Generate MasterAgent supervision reports
-        run: python3 scripts/master_status_report.py --skip-verify --verify-status 通过 --verify-summary "CI job 已完成 make verify。"
+      - name: Refresh MasterAgent supervision reports
+        if: always()
+        run: |
+          status="失败"
+          summary="CI job 执行 make verify 失败。"
+          if [ "${{ steps.verify.outcome }}" = "success" ]; then
+            status="通过"
+            summary="CI job 已完成 make verify，并刷新监督与派工产物。"
+          fi
+          make refresh-supervision VERIFY_STATUS="${status}" VERIFY_SUMMARY="${summary}"
 
       - name: Upload supervision artifacts
         if: always()

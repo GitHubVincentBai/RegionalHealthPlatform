@@ -133,6 +133,34 @@ body {
   gap: 16px;
 }
 
+.archive-toolbar__actions,
+.archive-filters,
+.archive-filters__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.archive-toolbar__actions,
+.archive-filters__actions {
+  align-items: center;
+}
+
+.archive-filters {
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+.archive-filters label {
+  display: grid;
+  gap: 8px;
+  min-width: 180px;
+  flex: 1 1 180px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .content-grid-wide {
   grid-template-columns: 1.1fr 0.9fr;
 }
@@ -371,6 +399,19 @@ body {
   font-size: 20px;
 }
 
+.detail-panel--compact {
+  padding: 18px 20px;
+  border-radius: 20px;
+  box-shadow: none;
+  background: var(--panel-strong);
+}
+
+.detail-panel--accent {
+  background:
+    linear-gradient(135deg, rgba(255, 248, 239, 0.98), rgba(255, 253, 248, 0.96)),
+    var(--panel);
+}
+
 .detail-dl {
   display: grid;
   gap: 16px;
@@ -390,6 +431,12 @@ body {
 .detail-dl dd {
   margin: 0;
   font-weight: 800;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .archive-toolbar,
@@ -429,6 +476,12 @@ body {
   border-color: rgba(180, 69, 69, 0.2);
   background: rgba(180, 69, 69, 0.1);
   color: var(--danger);
+}
+
+.info-banner--success {
+  border-color: rgba(37, 116, 91, 0.2);
+  background: rgba(37, 116, 91, 0.1);
+  color: var(--success);
 }
 
 .archive-list {
@@ -474,6 +527,117 @@ body {
   font-weight: 800;
 }
 
+.task-package-grid,
+.reserve-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.task-package-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.task-package-card,
+.reserve-grid__item,
+.form-section {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--panel-strong);
+}
+
+.task-package-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.task-package-card p,
+.reserve-grid__item p,
+.form-section__head p {
+  margin: 0 0 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.task-package-card small {
+  color: var(--accent-2);
+  font-weight: 700;
+}
+
+.contact-list {
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.contact-list__item {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(53, 109, 140, 0.08);
+}
+
+.contact-list__item p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.workbench-list,
+.workbench-points {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workbench-list {
+  display: grid;
+  gap: 12px;
+}
+
+.workbench-list__item {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.workbench-list__item p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.workbench-points {
+  display: grid;
+  gap: 10px;
+}
+
+.workbench-points li {
+  position: relative;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.workbench-points li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 .action-button {
   min-height: 42px;
   padding: 0 16px;
@@ -498,6 +662,11 @@ body {
   box-shadow: none;
 }
 
+.action-button--small {
+  min-height: 40px;
+  padding: 0 14px;
+}
+
 .intake-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -517,6 +686,45 @@ body {
   font-weight: 700;
 }
 
+.intake-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.intake-aside {
+  display: grid;
+  gap: 16px;
+}
+
+.form-section {
+  padding: 20px;
+}
+
+.form-section__head {
+  margin-bottom: 16px;
+}
+
+.form-section__head h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.archive-filters input,
+.archive-filters select,
 .intake-form input,
 .intake-form select,
 .intake-form textarea {
@@ -546,7 +754,11 @@ body {
   .content-grid,
   .service-list,
   .app-nav,
-  .intake-form {
+  .intake-form,
+  .intake-layout,
+  .form-grid,
+  .task-package-grid,
+  .detail-grid {
     grid-template-columns: 1fr;
   }
 

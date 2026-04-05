@@ -71,6 +71,7 @@ describe("createElderArchiveService", () => {
     assert.equal(archive.summary.checkedIn, 1);
     assert.equal(archive.summary.waitingCheckIn, 1);
     assert.equal(archive.elders[0].family, "赵家属");
+    assert.equal(archive.elders[0].station, "待补充");
   });
 
   it("creates elder profiles with a payload compatible with elder-service", async () => {
@@ -98,8 +99,12 @@ describe("createElderArchiveService", () => {
     const created = await service.createElder({
       elderCode: "EC-4001",
       fullName: "孙奶奶",
+      gender: "女",
       age: 81,
+      phone: "13611112222",
+      idCard: "210102194502030012",
       riskLevel: "高风险",
+      stationId: "station-longhu",
       checkInStatus: "待入住",
       room: "A-201",
       bed: "A-201-01",
@@ -112,10 +117,12 @@ describe("createElderArchiveService", () => {
 
     assert.equal(created.source, "api");
     assert.equal(capturedPayload.risk_level, "high");
+    assert.equal(capturedPayload.station_id, "station-longhu");
     assert.equal(capturedPayload.stay_info.check_in_status, "pre_admission");
     assert.equal(capturedPayload.family_contacts[0].phone, "13812345678");
     assert.equal(created.elder.status, "待入住");
     assert.equal(created.elder.family, "孙先生");
+    assert.equal(created.elder.phone, "待补充");
   });
 
   it("gets elder detail from elder-service and maps it for the detail page", async () => {

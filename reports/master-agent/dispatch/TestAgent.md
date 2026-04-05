@@ -14,7 +14,7 @@
 
 ## 阻塞
 
-- 等待 FrontAgent 完成 API adapter / 最小联调接入。
+- 无
 
 ## 回传对象
 

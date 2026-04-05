@@ -1,6 +1,6 @@
 # MasterAgent 自动派工单
 
-- 生成时间: 2026-04-05 20:18:14 CST
+- 生成时间: 2026-04-05 21:51:12 CST
 - 分支: `codex/elder-list-query`
 - 派工目标: 基于 `docs/product/Elder入住首批任务包.md` 驱动各 Agent 继续收口 Elder 入住 MVP
 
@@ -8,32 +8,30 @@
 
 | Agent | 当前状态 | 派工状态 | 依赖 | 写入范围 |
 |---|---|---|---|---|
-| `ArchAgent` | 已完成 | DONE | 无 | `docs/architecture/**` |
-| `PythonAgent` | 进行中 | ACTIVE | ArchAgent | `services/python/**` |
-| `FrontAgent` | 进行中 | BLOCKED | PythonAgent | `apps/**` |
+| `ArchAgent` | 已完成 | DONE | 无 | `docs/architecture/**; docs/product/**` |
+| `PythonAgent` | 已完成 | SUPPORT | ArchAgent | `services/python/**` |
+| `FrontAgent` | 已完成 | DONE | PythonAgent | `apps/**` |
 | `TestAgent` | 已完成 | DONE | PythonAgent、FrontAgent | `tests/**; apps/** 内测试文件; services/** 内测试文件` |
-| `DevOpsAgent` | 进行中 | ACTIVE | 无 | `.github/**; deploy/**; scripts/**; Makefile; docs/governance/**` |
+| `DevOpsAgent` | 已完成 | DONE | TestAgent | `.github/**; deploy/**; scripts/**; Makefile; docs/governance/**` |
 | `GoAgent` | 已完成 | DONE | 无 | `services/go/**` |
-| `MasterAgent` | 进行中 | ACTIVE | ArchAgent、PythonAgent、FrontAgent、TestAgent、DevOpsAgent、GoAgent | `reports/master-agent/**; docs/product/**; docs/agents/**` |
+| `MasterAgent` | 已完成 | DONE | ArchAgent、PythonAgent、FrontAgent、TestAgent、DevOpsAgent、GoAgent | `reports/master-agent/**; docs/product/**; docs/agents/**` |
 
 ## MasterAgent 调度顺序
 
-1. 先驱动 `FrontAgent` 完成 API adapter 与最小联调。
-2. 再驱动 `TestAgent` 将 P0 用例转成真实冒烟测试。
-3. 最后驱动 `DevOpsAgent` 接入新的冒烟测试到 `Makefile` / CI。
-4. `PythonAgent` 在本轮以支持态提供稳定接口契约，不越权修改前端和测试目录。
-5. `ArchAgent` 与 `GoAgent` 保持边界审阅和支持态，不抢占主路径资源。
+1. `PythonAgent` 在本轮以支持态提供稳定接口契约，不越权修改前端和测试目录。
+2. `ArchAgent` 与 `GoAgent` 保持边界审阅和支持态，不抢占主路径资源。
 
 ## 各 Agent 工单
 
 ### `ArchAgent`
 
 - 派工状态: `DONE`
-- 工作目标: 保持 Elder 入住 MVP 的字段边界稳定，不主动扩大范围。
-- 写入范围: `docs/architecture/**`
+- 工作目标: 保持 Elder 入住 MVP 的字段边界稳定，并对齐任务包引用的字段清单路径。
+- 写入范围: `docs/architecture/**; docs/product/**`
 - 依赖: 无
 - 待办:
   - 审阅任何新增的入住状态、床位关联或家属关系字段，防止越界到合同/费用/护理计划。
+  - 若任务包引用 `docs/product/功能页面字段集清单.md`，补齐该路径下的字段清单（可基于架构字段清单映射产出）。
   - 如果 FrontAgent 或 PythonAgent 提出模型扩展诉求，只输出边界约束，不直接代写其他栈代码。
 - 阻塞:
   - 无
@@ -44,7 +42,7 @@
 
 ### `PythonAgent`
 
-- 派工状态: `ACTIVE`
+- 派工状态: `SUPPORT`
 - 工作目标: 确保 elder-service 既提供稳定 API 契约，也能在仓库级验证环境里稳定跑通 HTTP 测试。
 - 写入范围: `services/python/**`
 - 依赖: ArchAgent
@@ -62,7 +60,7 @@
 
 ### `FrontAgent`
 
-- 派工状态: `BLOCKED`
+- 派工状态: `DONE`
 - 工作目标: 完成 Elder 入住 MVP 前端 API 适配层与最小联调，不再停留在静态骨架。
 - 写入范围: `apps/**`
 - 依赖: PythonAgent
@@ -71,7 +69,7 @@
   - 把列表、详情、创建入口与 elder-service 的最小 create/list/get 链路接通，保留 mock 兜底策略时要显式标注。
   - 补充前端侧最小联调或调用层测试，避免页面骨架与真实接口脱节。
 - 阻塞:
-  - 等待 PythonAgent 提供稳定 API 契约。
+  - 无
 - 完成后回传给:
   - `TestAgent`
   - `MasterAgent`
@@ -87,17 +85,17 @@
   - 把测试矩阵中的 P0 用例映射到实际文件与执行命令，避免只有文档没有结果。
   - 仅在测试目录或测试文件中补强，不直接改业务实现；若发现缺口，回传给对应 Agent。
 - 阻塞:
-  - 等待 FrontAgent 完成 API adapter / 最小联调接入。
+  - 无
 - 完成后回传给:
   - `DevOpsAgent`
   - `MasterAgent`
 
 ### `DevOpsAgent`
 
-- 派工状态: `ACTIVE`
+- 派工状态: `DONE`
 - 工作目标: 修复仓库级验证环境，并在后续把联调冒烟检查纳入统一验证入口与持续监督链路。
 - 写入范围: `.github/**; deploy/**; scripts/**; Makefile; docs/governance/**`
-- 依赖: 无
+- 依赖: TestAgent
 - 待办:
   - 调整 Python 验证入口，使 `make verify` 在正确的依赖环境里执行 elder-service HTTP 测试。
   - 与 PythonAgent 对齐依赖声明和测试执行方式，避免 `fastapi` 等运行依赖在仓库级检查里缺失。
@@ -126,7 +124,7 @@
 
 ### `MasterAgent`
 
-- 派工状态: `ACTIVE`
+- 派工状态: `DONE`
 - 工作目标: 按依赖顺序驱动未完成 Agent 收口 Elder 入住 MVP，并避免互相越权改动。
 - 写入范围: `reports/master-agent/**; docs/product/**; docs/agents/**`
 - 依赖: ArchAgent、PythonAgent、FrontAgent、TestAgent、DevOpsAgent、GoAgent
@@ -136,8 +134,7 @@
   - 待 Python 验证环境与 FrontAgent 都收口后，再驱动 TestAgent 把 P0 用例转成真实冒烟测试。
   - 待 TestAgent 交付后，再通知 DevOpsAgent 把冒烟测试接入 `Makefile` 与 CI。
 - 阻塞:
-  - FrontAgent 尚未完成 API adapter 与最小联调。
-  - PythonAgent / DevOpsAgent 尚未修复 Python HTTP 测试依赖环境。
+  - 无
 - 完成后回传给:
   - `FrontAgent`
   - `PythonAgent`

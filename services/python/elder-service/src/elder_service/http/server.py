@@ -16,6 +16,10 @@ from elder_service.http.schemas import (
 )
 from elder_service.service import create_default_service
 
+HTTP_422_STATUS = getattr(status, "HTTP_422_UNPROCESSABLE_CONTENT", None)
+if HTTP_422_STATUS is None:
+    HTTP_422_STATUS = status.HTTP_422_UNPROCESSABLE_ENTITY
+
 
 def create_app(service: ElderService | None = None) -> FastAPI:
     service = service or create_default_service()
@@ -92,6 +96,8 @@ def create_app(service: ElderService | None = None) -> FastAPI:
             )
         except ElderProfileAlreadyExistsError as exc:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=HTTP_422_STATUS, detail=str(exc)) from exc
 
         return ElderProfileResponse.from_domain(profile)
 

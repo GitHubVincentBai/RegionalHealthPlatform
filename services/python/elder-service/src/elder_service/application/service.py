@@ -1,3 +1,5 @@
+from datetime import date
+
 from elder_service.application.repository import ElderProfileRepository
 from elder_service.domain.models import ElderProfile, FamilyContact, StayInfo
 
@@ -8,6 +10,28 @@ class ElderProfileAlreadyExistsError(ValueError):
 
 class ElderProfileNotFoundError(LookupError):
     pass
+
+
+def _age_from_birth_date(birth_date: str) -> int:
+    try:
+        birth = date.fromisoformat(birth_date)
+    except ValueError as exc:
+        raise ValueError("birth_date must use YYYY-MM-DD format") from exc
+
+    today = date.today()
+    return today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+
+
+def resolve_profile_age(age: int | None, birth_date: str) -> int:
+    normalized_birth_date = birth_date.strip()
+    if age is None:
+        if not normalized_birth_date:
+            raise ValueError("either age or birth_date must be provided")
+        return _age_from_birth_date(normalized_birth_date)
+
+    if age < 0:
+        raise ValueError("age must be non-negative")
+    return age
 
 
 class ElderService:
@@ -21,7 +45,7 @@ class ElderService:
         elder_code: str | None = None,
         full_name: str,
         gender: str,
-        age: int,
+        age: int | None = None,
         birth_date: str = "",
         phone: str = "",
         id_card: str = "",
@@ -34,12 +58,13 @@ class ElderService:
         if self._repository.get(elder_id) is not None:
             raise ElderProfileAlreadyExistsError(f"elder profile {elder_id} already exists")
 
+        resolved_age = resolve_profile_age(age, birth_date)
         profile = ElderProfile(
             elder_id=elder_id,
             elder_code=elder_code or elder_id,
             full_name=full_name,
             gender=gender,
-            age=age,
+            age=resolved_age,
             birth_date=birth_date,
             phone=phone,
             id_card=id_card,

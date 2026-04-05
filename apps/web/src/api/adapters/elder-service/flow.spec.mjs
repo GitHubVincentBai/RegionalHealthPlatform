@@ -8,7 +8,13 @@ function createClient() {
       elder_id: "E-8001",
       elder_code: "EC-8001",
       full_name: "联调样例",
+      gender: "女",
       age: 78,
+      birth_date: "1948-01-02",
+      phone: "13600009999",
+      id_card: "210102194801020026",
+      status: "active",
+      station_id: "station-longhu",
       risk_level: "medium",
       current_stay_status: "pre_admission",
       stay_info: {
@@ -46,7 +52,13 @@ function createClient() {
         elder_id: payload.elder_id,
         elder_code: payload.elder_code,
         full_name: payload.full_name,
+        gender: payload.gender,
         age: payload.age,
+        birth_date: payload.birth_date,
+        phone: payload.phone,
+        id_card: payload.id_card,
+        status: payload.status,
+        station_id: payload.station_id,
         risk_level: payload.risk_level,
         current_stay_status: payload.stay_info.check_in_status,
         stay_info: payload.stay_info,
@@ -70,7 +82,9 @@ describe("elder archive flow", () => {
     const created = await service.createElder({
       elderCode: "EC-8002",
       fullName: "联调新增长者",
+      gender: "女",
       age: 82,
+      stationId: "station-heping",
       riskLevel: "高风险",
       checkInStatus: "已入住",
       room: "A-103",
@@ -90,6 +104,7 @@ describe("elder archive flow", () => {
     assert.equal(afterCreate.elders[0].fullName, "联调新增长者");
     assert.equal(detail.elder.family, "联调家属");
     assert.equal(detail.elder.status, "已入住");
+    assert.equal(detail.elder.stationId, "station-heping");
   });
 
   it("keeps the create then list/detail smoke path stable for elder intake", async () => {

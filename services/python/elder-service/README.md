@@ -37,6 +37,13 @@ Install runtime and test dependencies:
 python3 -m pip install -e ".[test]"
 ```
 
+`.[test]` is the expected local entry for the HTTP suite. The service uses
+`unittest`, but the runtime dependencies required by `fastapi.testclient`
+must already exist in that environment.
+For repository-level verification, treat `services/python/elder-service/.venv`
+bootstrapped by `bash scripts/run_python_elder_checks.sh test` as the canonical
+environment instead of relying on host Python packages.
+
 Run locally:
 
 ```bash
@@ -46,9 +53,13 @@ PYTHONPATH=src python3 -m elder_service
 Run tests from either the repository root or the service directory:
 
 ```bash
-python3 -m unittest discover -s services/python/elder-service/tests
-cd services/python/elder-service && python3 -m unittest discover -s tests
+bash scripts/run_python_elder_checks.sh test
+cd services/python/elder-service && ./.venv/bin/python -m unittest tests.test_service tests.test_http
 ```
+
+Running `python3 -m unittest tests.test_service tests.test_http` directly on the
+host interpreter is only expected to work after that interpreter has installed
+`.[test]`; otherwise the HTTP suite will fail fast on missing `fastapi`.
 
 Repository-level verification still uses:
 
@@ -65,7 +76,7 @@ Stable `POST /elders` example payload:
   "elder_code": "EC-100",
   "full_name": "赵六",
   "gender": "male",
-  "age": 79,
+  "age": 78,
   "birth_date": "1947-08-16",
   "phone": "13900000001",
   "id_card": "210102194708160011",
@@ -104,6 +115,24 @@ The code-level source of truth for FrontAgent sample payloads lives in
 - `ELDER_PROFILE_LIST_EXAMPLE` for `GET /elders`
 
 OpenAPI exposes the same examples through the request and response schemas.
+
+`POST /elders` accepts `age` or `birth_date`; at least one of the two must be
+present. The stable example keeps both fields so FrontAgent can cover
+`family_contacts`、`stay_info`、`room_id`、`bed_id` against a complete payload.
+For the MVP contract, `stay_info.check_in_status` may be submitted on its own;
+`room_id`、`bed_id`、`check_in_date` remain optional fields in the create, list,
+and detail payloads.
+When present, `birth_date` and `stay_info.check_in_date` must use `YYYY-MM-DD`.
+
+Canonical local verification for this service is:
+
+```bash
+bash scripts/run_python_elder_checks.sh test
+```
+
+That entry bootstraps and reuses `services/python/elder-service/.venv`, installs
+`-e ".[test]"` when the runtime imports are missing, and runs the service plus
+HTTP suites from the same isolated environment used by repository-level checks.
 
 `POST /elders`、`GET /elders` 列表项、`GET /elders/{elder_id}` 详情统一返回以下任务包字段：
 

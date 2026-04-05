@@ -79,6 +79,11 @@ def file_contains(path: str, snippets: list[str]) -> bool:
     return all(snippet in content for snippet in snippets)
 
 
+def file_contains_any(path: str, snippets: list[str]) -> bool:
+    content = read_text(REPO_ROOT / path)
+    return any(snippet in content for snippet in snippets)
+
+
 def run_command(args: list[str]) -> tuple[int, str]:
     completed = subprocess.run(
         args,
@@ -196,9 +201,16 @@ def evaluate_agents(verify_status: str) -> list[AgentReport]:
     ci_content = read_text(REPO_ROOT / ".github/workflows/ci.yml")
     python_check_script = read_text(REPO_ROOT / "scripts/run_python_elder_checks.sh")
 
-    arch_ready = file_exists("docs/architecture/Arch.md") and file_contains(
-        "docs/product/Elder入住首批任务包.md",
-        ["家属关系", "入住信息", "房间与床位关联", "风险等级"],
+    task_package_content = read_text(TASK_PACKAGE)
+    field_catalog_reference_needed = "功能页面字段集清单.md" in task_package_content
+    field_catalog_product_ready = file_exists("docs/product/功能页面字段集清单.md")
+    arch_ready = (
+        file_exists("docs/agents/Arch.md")
+        and file_contains(
+            "docs/product/Elder入住首批任务包.md",
+            ["家属关系", "入住信息", "房间与床位关联", "风险等级"],
+        )
+        and (not field_catalog_reference_needed or field_catalog_product_ready)
     )
 
     python_ready = all(
@@ -225,17 +237,37 @@ def evaluate_agents(verify_status: str) -> list[AgentReport]:
         "services/python/elder-service/tests/test_http.py",
         ["from fastapi.testclient import TestClient"],
     )
+    python_make_targets_aligned = all(
+        [
+            "prepare-python-elder-service" in makefile_content,
+            "test-python-elder-service" in makefile_content,
+            "test-elder-integration-smoke" in makefile_content,
+            "run_python_elder_checks.sh test" in makefile_content,
+            "run_python_elder_checks.sh smoke" in makefile_content,
+        ]
+    )
     python_verification_bootstrapped = (
-        "run_python_elder_checks.sh" in makefile_content
+        python_make_targets_aligned
         and ".venv" in python_check_script
-        and '--no-build-isolation -e "${SERVICE_DIR}[test]"' in python_check_script
+        and "pick_python_bin" in python_check_script
+        and "python3.11" in python_check_script
+        and 'pip install --disable-pip-version-check --no-build-isolation -e ".[test]"' in python_check_script
         and "reusing elder-service dependencies" in python_check_script
+        and "dependency stamp matches, but runtime imports are missing" in python_check_script
         and "import fastapi, httpx, uvicorn" in python_check_script
         and "tests.test_service tests.test_http" in python_check_script
+        and "ensure_shell_smoke_uses_venv_python" in python_check_script
         and "dependency sync unavailable; falling back to host runtime packages" not in python_check_script
         and "--system-site-packages" not in python_check_script
     )
-    python_ci_aligned = "run: make verify" in ci_content or "run: |\n          make verify" in ci_content
+    python_ci_aligned = all(
+        [
+            'python-version: "3.11"' in ci_content,
+            "run: make verify" in ci_content,
+            "Refresh MasterAgent supervision reports" in ci_content,
+            "if: always()" in ci_content,
+        ]
+    )
     python_env_gap = python_dependency_declared and python_http_tests_require_fastapi and not (
         python_verification_bootstrapped and python_ci_aligned
     )
@@ -251,23 +283,36 @@ def evaluate_agents(verify_status: str) -> list[AgentReport]:
             ),
         ]
     )
-    front_adapter_ready = file_exists("apps/web/src/api") or file_exists("apps/web/src/services")
+    front_adapter_ready = (
+        file_exists("apps/web/src/api/adapters/elder-service/index.js")
+        or file_exists("apps/web/src/modules/elder/api/client.js")
+        or file_exists("apps/web/src/services")
+    )
     front_api_module_ready = all(
         [
-            file_exists("apps/web/src/modules/elder/api/client.js"),
-            file_exists("apps/web/src/modules/elder/api/adapter.js"),
-            file_exists("apps/web/src/modules/elder/api/service.js"),
-            file_exists("apps/web/src/modules/elder/api/client.spec.mjs"),
-            file_exists("apps/web/src/modules/elder/api/adapter.spec.mjs"),
-            file_exists("apps/web/src/modules/elder/api/service.spec.mjs"),
+            file_exists("apps/web/src/api/adapters/elder-service/httpClient.js"),
+            file_exists("apps/web/src/api/adapters/elder-service/mapper.js"),
+            file_exists("apps/web/src/api/adapters/elder-service/archiveService.js"),
+            file_exists("apps/web/src/api/adapters/elder-service/httpClient.spec.mjs"),
+            file_exists("apps/web/src/api/adapters/elder-service/mapper.spec.mjs"),
+            file_exists("apps/web/src/api/adapters/elder-service/archiveService.spec.mjs"),
+            file_exists("apps/web/src/api/adapters/elder-service/flow.spec.mjs"),
         ]
     )
     front_ready = front_pages_ready and front_adapter_ready and front_api_module_ready
 
     test_plan_ready = file_exists("tests/integration/elder_checkin_test_matrix.md")
-    frontend_tests_ready = file_contains(
-        "apps/web/scripts/test.mjs",
-        ["elderArchiveVue", "elderIntakeVue"],
+    frontend_tests_ready = all(
+        [
+            file_contains(
+                "apps/web/scripts/test.mjs",
+                ["elderArchiveVue", "elderIntakeVue", "createElderArchiveService"],
+            ),
+            file_contains_any(
+                "apps/web/scripts/test.mjs",
+                ["flow.spec.mjs", "elder archive flow"],
+            ),
+        ]
     )
     backend_tests_ready = file_contains(
         "services/python/elder-service/tests/test_http.py",
@@ -299,11 +344,23 @@ def evaluate_agents(verify_status: str) -> list[AgentReport]:
             name="ArchAgent",
             task="架构与数据约束校验",
             status="已完成" if arch_ready else "风险",
-            completed="已定义长者、家属、入住、床位关联的首批边界。" if arch_ready else "任务包或架构边界文档不完整。",
-            risk="后续若扩展合同、费用、护理计划，仍需追加状态机与边界约束。" if arch_ready else "缺少架构边界依据，后续实现容易越界。",
+            completed="已定义长者、家属、入住、床位关联的首批边界，并对齐任务包引用字段清单。"
+            if arch_ready
+            else "任务包或架构边界文档不完整，或任务包引用的字段清单路径未对齐。",
+            risk="后续若扩展合同、费用、护理计划，仍需追加状态机与边界约束。"
+            if arch_ready
+            else (
+                "任务包已引用 `docs/product/功能页面字段集清单.md`，当前路径尚未满足。"
+                if field_catalog_reference_needed and not field_catalog_product_ready
+                else "缺少架构边界依据，后续实现容易越界。"
+            ),
             next_action="保持审阅状态，等待二期扩展再细化。"
             if arch_ready
-            else "补齐架构约束文档与字段边界。",
+            else (
+                "先补齐 `docs/product/功能页面字段集清单.md`（可由架构字段清单映射产出），再回传 MasterAgent。"
+                if field_catalog_reference_needed and not field_catalog_product_ready
+                else "补齐架构约束文档与字段边界。"
+            ),
         ),
         AgentReport(
             name="PythonAgent",
@@ -336,18 +393,22 @@ def evaluate_agents(verify_status: str) -> list[AgentReport]:
         AgentReport(
             name="TestAgent",
             task="测试矩阵与回归策略",
-            status="进行中"
-            if test_plan_ready and (not integration_smoke_ready or not (frontend_tests_ready and backend_tests_ready))
-            else ("已完成" if test_plan_ready else "风险"),
+            status="已完成"
+            if test_plan_ready and integration_smoke_ready and frontend_tests_ready and backend_tests_ready
+            else ("进行中" if test_plan_ready else "风险"),
             completed="已产出 Elder 入住首批测试矩阵；前后端也已有基础自动化测试。"
             if test_plan_ready
             else "测试矩阵文档尚未落地。",
-            risk="文档不等于执行结果，当前还缺少明确的跨前后端 MVP 联调冒烟资产。"
-            if test_plan_ready and not integration_smoke_ready
-            else ("前端或后端基础自动化不足。" if test_plan_ready else "没有测试矩阵会导致验收口径不清。"),
-            next_action="把 P0 用例落成一条真实联调冒烟测试，并纳入周期巡检。"
-            if test_plan_ready
-            else "先补测试矩阵，再补自动化。",
+            risk=""
+            if test_plan_ready and integration_smoke_ready and frontend_tests_ready and backend_tests_ready
+            else (
+                "文档不等于执行结果，当前还缺少明确的跨前后端 MVP 联调冒烟资产。"
+                if test_plan_ready and not integration_smoke_ready
+                else ("前端或后端基础自动化不足。" if test_plan_ready else "没有测试矩阵会导致验收口径不清。")
+            ),
+            next_action="回传给 DevOpsAgent 和 MasterAgent，继续纳入周期巡检。"
+            if test_plan_ready and integration_smoke_ready and frontend_tests_ready and backend_tests_ready
+            else ("把 P0 用例落成一条真实联调冒烟测试，并纳入周期巡检。" if test_plan_ready else "先补测试矩阵，再补自动化。"),
         ),
         AgentReport(
             name="DevOpsAgent",
@@ -431,12 +492,13 @@ def build_work_orders(reports: list[AgentReport]) -> list[WorkOrder]:
     orders = [
         WorkOrder(
             agent_name="ArchAgent",
-            dispatch_state="DONE",
-            write_scope="docs/architecture/**",
+            dispatch_state="ACTIVE" if lookup["ArchAgent"].status != "已完成" else "DONE",
+            write_scope="docs/architecture/**; docs/product/**",
             dependencies=[],
-            objective="保持 Elder 入住 MVP 的字段边界稳定，不主动扩大范围。",
+            objective="保持 Elder 入住 MVP 的字段边界稳定，并对齐任务包引用的字段清单路径。",
             todo_items=[
                 "审阅任何新增的入住状态、床位关联或家属关系字段，防止越界到合同/费用/护理计划。",
+                "若任务包引用 `docs/product/功能页面字段集清单.md`，补齐该路径下的字段清单（可基于架构字段清单映射产出）。",
                 "如果 FrontAgent 或 PythonAgent 提出模型扩展诉求，只输出边界约束，不直接代写其他栈代码。",
             ],
             blockers=[],
@@ -491,7 +553,13 @@ def build_work_orders(reports: list[AgentReport]) -> list[WorkOrder]:
         ),
         WorkOrder(
             agent_name="DevOpsAgent",
-            dispatch_state="ACTIVE" if python_env_fix_needed else ("READY" if dependency_complete(lookup, ["TestAgent"]) and lookup["DevOpsAgent"].status == "已完成" else ("WAITING" if lookup["DevOpsAgent"].status == "已完成" else "ACTIVE")),
+            dispatch_state="ACTIVE"
+            if python_env_fix_needed
+            else (
+                "DONE"
+                if lookup["DevOpsAgent"].status == "已完成"
+                else ("WAITING" if not dependency_complete(lookup, ["TestAgent"]) else "ACTIVE")
+            ),
             write_scope=".github/**; deploy/**; scripts/**; Makefile; docs/governance/**",
             dependencies=[] if python_env_fix_needed else ["TestAgent"],
             objective="修复仓库级验证环境，并在后续把联调冒烟检查纳入统一验证入口与持续监督链路。",
@@ -523,6 +591,8 @@ def build_work_orders(reports: list[AgentReport]) -> list[WorkOrder]:
     ]
 
     master_blockers: list[str] = []
+    if lookup["ArchAgent"].status != "已完成":
+        master_blockers.append("ArchAgent 尚未完成任务包字段边界/字段清单路径对齐。")
     if lookup["FrontAgent"].status != "已完成":
         master_blockers.append("FrontAgent 尚未完成 API adapter 与最小联调。")
     if python_env_fix_needed:
@@ -594,6 +664,9 @@ def render_dispatch_report(
     step_index = 1
     if python_env_fix_needed:
         dispatch_order.append(f"{step_index}. 先驱动 `DevOpsAgent` 修复 Python 隔离依赖环境，确保 `make verify` 真实覆盖 elder-service HTTP 测试。")
+        step_index += 1
+    if report_lookup["ArchAgent"].status != "已完成":
+        dispatch_order.append(f"{step_index}. 驱动 `ArchAgent` 先完成任务包字段边界与字段清单路径对齐。")
         step_index += 1
     if front_pending:
         dispatch_order.append(f"{step_index}. 驱动 `FrontAgent` 完成 API adapter 与最小联调。")

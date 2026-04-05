@@ -10,8 +10,8 @@ def create_default_service() -> ElderService:
 def create_elder_profile(
     elder_id: str,
     full_name: str,
-    age: int,
     station_id: str,
+    age: int | None = None,
     risk_level: str = "medium",
     gender: str = "unknown",
     birth_date: str = "",

@@ -1,7 +1,7 @@
 # PythonAgent 工作单
 
-- 当前红黄绿灯状态: 进行中
-- 派工状态: ACTIVE
+- 当前红黄绿灯状态: 已完成
+- 派工状态: SUPPORT
 - 工作目标: 确保 elder-service 既提供稳定 API 契约，也能在仓库级验证环境里稳定跑通 HTTP 测试。
 - 写入范围: `services/python/**`
 - 依赖: ArchAgent

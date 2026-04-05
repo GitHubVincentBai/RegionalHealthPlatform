@@ -22,3 +22,5 @@ Elder intake/list/detail now use the front-end adapter layer under `src/api/adap
 - `mapper.js` maps API payloads to page view models and create payloads
 - `archiveService.js` coordinates `create/list/get` and keeps explicit mock fallback warnings visible in the UI
 - `flow.spec.mjs` covers the minimal `create -> list -> get` call chain to reduce drift from the Python service contract
+
+For local integration at `http://localhost:5173/`, Vite proxies `/api/*` to `http://127.0.0.1:8000/*`, so the browser can call `elder-service` without an extra CORS setup during development.

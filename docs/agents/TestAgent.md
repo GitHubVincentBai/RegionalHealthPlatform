@@ -15,7 +15,7 @@
 
 ## 二、核心职责
 
-- 阅读 `docs/product/PRD.md`、`docs/architecture/Arch.md`、`docs/product/Modules.md` 和相关 Agent 文档
+- 阅读 `docs/product/PRD.md`、`docs/agents/Arch.md`、`docs/product/Modules.md` 和相关 Agent 文档
 - 基于改动范围输出测试策略和用例矩阵
 - 补充或指导补充自动化测试
 - 校验关键业务链路、异常分支、权限边界和数据一致性

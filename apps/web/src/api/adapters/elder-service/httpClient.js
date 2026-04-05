@@ -1,4 +1,5 @@
-const DEFAULT_BASE_URL = "http://127.0.0.1:8000";
+const DEFAULT_BASE_URL = "/api";
+const DEFAULT_TIMEOUT_MS = 1500;
 
 function normalizeBaseUrl(baseUrl) {
   return (baseUrl || DEFAULT_BASE_URL).replace(/\/+$/, "");
@@ -36,21 +37,48 @@ async function parseResponse(response) {
 export function createElderServiceHttpClient(options = {}) {
   const baseUrl = normalizeBaseUrl(options.baseUrl ?? import.meta.env?.VITE_ELDER_SERVICE_BASE_URL);
   const fetchImpl = options.fetchImpl ?? globalThis.fetch;
+  const timeoutMs = Number(options.timeoutMs ?? import.meta.env?.VITE_ELDER_SERVICE_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
 
   if (typeof fetchImpl !== "function") {
     throw new Error("global fetch is unavailable; cannot call elder-service");
   }
 
   async function request(path, init = {}) {
-    const response = await fetchImpl(`${baseUrl}${path}`, {
-      method: init.method || "GET",
-      headers: {
-        Accept: "application/json",
-        ...(init.body ? { "Content-Type": "application/json" } : {}),
-        ...(init.headers || {}),
-      },
-      ...init,
-    });
+    const controller = typeof AbortController === "function" ? new AbortController() : null;
+    const timeoutId =
+      controller && timeoutMs > 0
+        ? setTimeout(() => controller.abort(new Error(`elder-service request timeout after ${timeoutMs}ms`)), timeoutMs)
+        : null;
+
+    let response;
+
+    try {
+      response = await fetchImpl(`${baseUrl}${path}`, {
+        method: init.method || "GET",
+        headers: {
+          Accept: "application/json",
+          ...(init.body ? { "Content-Type": "application/json" } : {}),
+          ...(init.headers || {}),
+        },
+        signal: init.signal ?? controller?.signal,
+        ...init,
+      });
+    } catch (error) {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
+      if (error?.name === "AbortError") {
+        throw new Error(`elder-service request timeout after ${timeoutMs}ms`);
+      }
+
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`elder-service network error: ${message}`);
+    }
+
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       let detail = `${response.status} ${response.statusText}`.trim();

@@ -1,10 +1,27 @@
 from dataclasses import dataclass, field
+from datetime import date
+
+
+VALID_CHECK_IN_STATUSES = {"pre_admission", "checked_in", "discharged"}
 
 
 def _normalize_text(value: str, field_name: str) -> str:
     normalized = value.strip()
     if not normalized:
         raise ValueError(f"{field_name} must not be empty")
+    return normalized
+
+
+def _normalize_optional_iso_date(value: str, field_name: str) -> str:
+    normalized = value.strip()
+    if not normalized:
+        return ""
+
+    try:
+        date.fromisoformat(normalized)
+    except ValueError as exc:
+        raise ValueError(f"{field_name} must use YYYY-MM-DD format") from exc
+
     return normalized
 
 
@@ -41,8 +58,18 @@ class StayInfo:
         self.check_in_status = _normalize_text(self.check_in_status, "check_in_status")
         self.room_id = self.room_id.strip()
         self.bed_id = self.bed_id.strip()
-        self.check_in_date = self.check_in_date.strip()
+        self.check_in_date = _normalize_optional_iso_date(
+            self.check_in_date, "check_in_date"
+        )
         self.notes = self.notes.strip()
+
+        if self.check_in_status not in VALID_CHECK_IN_STATUSES:
+            raise ValueError(
+                f"check_in_status must be one of {', '.join(sorted(VALID_CHECK_IN_STATUSES))}"
+            )
+
+        if self.bed_id and not self.room_id:
+            raise ValueError("room_id is required when bed_id is provided")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -77,7 +104,7 @@ class ElderProfile:
         self.gender = _normalize_text(self.gender, "gender")
         if self.age < 0:
             raise ValueError("age must be non-negative")
-        self.birth_date = self.birth_date.strip()
+        self.birth_date = _normalize_optional_iso_date(self.birth_date, "birth_date")
         self.phone = self.phone.strip()
         self.id_card = self.id_card.strip()
         self.risk_level = _normalize_text(self.risk_level, "risk_level")
@@ -85,7 +112,20 @@ class ElderProfile:
         self.station_id = _normalize_text(self.station_id, "station_id")
         if not isinstance(self.stay_info, StayInfo):
             raise TypeError("stay_info must be a StayInfo instance")
-        self.family_contacts = [contact if isinstance(contact, FamilyContact) else FamilyContact(**contact) for contact in self.family_contacts]
+        self.family_contacts = [
+            contact if isinstance(contact, FamilyContact) else FamilyContact(**contact)
+            for contact in self.family_contacts
+        ]
+
+        primary_contacts = [
+            contact for contact in self.family_contacts if contact.is_primary_contact
+        ]
+        if self.family_contacts and not primary_contacts:
+            raise ValueError(
+                "family_contacts must include one primary contact when contacts are provided"
+            )
+        if len(primary_contacts) > 1:
+            raise ValueError("family_contacts can include only one primary contact")
 
     def is_high_risk(self) -> bool:
         return self.risk_level.lower() in {"high", "critical"}

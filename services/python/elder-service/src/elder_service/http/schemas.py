@@ -1,17 +1,22 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from elder_service.domain.models import ElderProfile, FamilyContact, StayInfo
 from elder_service.http.examples import (
     ELDER_PROFILE_CREATE_EXAMPLE,
     ELDER_PROFILE_LIST_EXAMPLE,
     ELDER_PROFILE_RESPONSE_EXAMPLE,
+    PRIMARY_FAMILY_CONTACT_EXAMPLE,
+    STAY_INFO_EXAMPLE,
 )
 
 
 class FamilyContactRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={"example": PRIMARY_FAMILY_CONTACT_EXAMPLE},
+    )
 
     family_name: str = Field(min_length=1)
     relation_type: str = Field(min_length=1)
@@ -28,6 +33,8 @@ class FamilyContactRequest(BaseModel):
 
 
 class FamilyContactResponse(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"example": PRIMARY_FAMILY_CONTACT_EXAMPLE})
+
     family_name: str
     relation_type: str
     phone: str
@@ -44,7 +51,7 @@ class FamilyContactResponse(BaseModel):
 
 
 class StayInfoRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", json_schema_extra={"example": STAY_INFO_EXAMPLE})
 
     check_in_status: str = Field(default="pre_admission", min_length=1)
     room_id: str = ""
@@ -63,6 +70,8 @@ class StayInfoRequest(BaseModel):
 
 
 class StayInfoResponse(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"example": STAY_INFO_EXAMPLE})
+
     check_in_status: str
     room_id: str
     bed_id: str
@@ -90,7 +99,7 @@ class ElderProfileCreateRequest(BaseModel):
     elder_code: str | None = Field(default=None, min_length=1)
     full_name: str = Field(min_length=1)
     gender: str = Field(default="unknown", min_length=1)
-    age: int = Field(ge=0)
+    age: int | None = Field(default=None, ge=0)
     birth_date: str = ""
     phone: str = ""
     id_card: str = ""
@@ -99,6 +108,12 @@ class ElderProfileCreateRequest(BaseModel):
     station_id: str = Field(min_length=1)
     stay_info: StayInfoRequest = Field(default_factory=StayInfoRequest)
     family_contacts: list[FamilyContactRequest] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_age_or_birth_date(self) -> "ElderProfileCreateRequest":
+        if self.age is None and not self.birth_date.strip():
+            raise ValueError("either age or birth_date must be provided")
+        return self
 
 
 class ElderProfileResponse(BaseModel):

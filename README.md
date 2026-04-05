@@ -37,7 +37,7 @@
   产品需求说明
 - [Modules.md](/Users/baizhiwen/MICROWARE/Git/RegionalHealthPlatform/docs/product/Modules.md)
   模块拆分说明
-- [Arch.md](/Users/baizhiwen/MICROWARE/Git/RegionalHealthPlatform/docs/architecture/Arch.md)
+- [Arch.md](/Users/baizhiwen/MICROWARE/Git/RegionalHealthPlatform/docs/agents/Arch.md)
   总体架构设计和 Arch Agent 约束
 
 ### 专项 Agent 文档
@@ -439,7 +439,7 @@ Draft PR -> CI 通过 -> review comments 修复 -> Ready for Review
 - README.md
 - docs/agents/MasterAgent.md
 - AGENTS.md
-- docs/architecture/Arch.md
+- docs/agents/Arch.md
 - 与本任务最相关的专项文档
 
 请完成任务：补充区域康养平台“呼叫中心工作台”模块的任务拆分与交付约束文档，并同步更新相关治理文档中的引用。
@@ -454,7 +454,7 @@ Draft PR -> CI 通过 -> review comments 修复 -> Ready for Review
 
 影响范围：
 - README.md
-- docs/architecture/Arch.md
+- docs/agents/Arch.md
 - docs/agents/FrontAgent.md
 - docs/agents/GoAgent.md
 - docs/agents/PythonAgent.md

@@ -1,10 +1,10 @@
 # DevOpsAgent 工作单
 
-- 当前红黄绿灯状态: 进行中
-- 派工状态: ACTIVE
+- 当前红黄绿灯状态: 已完成
+- 派工状态: DONE
 - 工作目标: 修复仓库级验证环境，并在后续把联调冒烟检查纳入统一验证入口与持续监督链路。
 - 写入范围: `.github/**; deploy/**; scripts/**; Makefile; docs/governance/**`
-- 依赖: 无
+- 依赖: TestAgent
 
 ## 待办
 

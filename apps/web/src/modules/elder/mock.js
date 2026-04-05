@@ -14,6 +14,10 @@ export function createMockElder(overrides = {}) {
     family: "张伟",
     familyRelation: "子女",
     familyPhone: "13800000001",
+    phone: "13900000001",
+    idCard: "210102194302120018",
+    birthDate: "1943-02-12",
+    stationId: "station-longhu",
     familyContacts: [
       {
         family_name: "张伟",
@@ -98,8 +102,12 @@ export function createElderDraft() {
     fullName: "",
     gender: "女",
     age: 80,
+    birthDate: "",
+    phone: "",
+    idCard: "",
     riskLevel: "中风险",
     station: "龙湖邻里中心",
+    stationId: "station-longhu",
     checkInStatus: "待入住",
     room: "",
     bed: "",

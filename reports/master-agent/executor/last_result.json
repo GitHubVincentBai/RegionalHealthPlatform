@@ -1,10 +1,15 @@
 {
-  "generated_at": "2026-04-05T20:15:46+08:00",
+  "generated_at": "2026-04-05T21:47:30+08:00",
   "run_verify": true,
   "execute": true,
   "selected_agent": null,
+  "selected_agents": [],
   "prompt_file": null,
+  "prompt_files": [],
   "dispatch_file": "/Users/baizhiwen/MICROWARE/Git/RegionalHealthPlatform/reports/master-agent/elder_mvp_dispatch.md",
   "status_file": "/Users/baizhiwen/MICROWARE/Git/RegionalHealthPlatform/reports/master-agent/elder_mvp_status.md",
-  "execution": "no-eligible-agent"
+  "execution": "no-eligible-agent",
+  "failure_threshold": 3,
+  "cooldown_seconds": 1800,
+  "max_parallel": 2
 }

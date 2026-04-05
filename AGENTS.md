@@ -10,7 +10,7 @@ Read these files first:
 
 Then route to the relevant specialized document:
 
-- `docs/architecture/Arch.md`
+- `docs/agents/Arch.md`
 - `docs/agents/FrontAgent.md`
 - `docs/agents/GoAgent.md`
 - `docs/agents/PythonAgent.md`
