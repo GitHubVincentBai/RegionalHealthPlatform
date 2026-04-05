@@ -32,6 +32,8 @@ const appState = reactive({
   submitSuccess: "",
   filters: {
     search: "",
+    stationId: "",
+    profileStatus: "",
     riskLevel: "",
     checkInStatus: "",
   },
@@ -66,6 +68,8 @@ const syncArchiveState = (archive) => {
 
 const toArchiveQuery = () => ({
   search: appState.filters.search,
+  station_id: appState.filters.stationId,
+  status: appState.filters.profileStatus,
   risk_level: appState.filters.riskLevel,
   check_in_status: appState.filters.checkInStatus,
   page: appState.pagination.page,
@@ -150,6 +154,8 @@ const applyArchiveFilters = async () => {
 const resetArchiveFilters = async () => {
   appState.filters = {
     search: "",
+    stationId: "",
+    profileStatus: "",
     riskLevel: "",
     checkInStatus: "",
   };
@@ -214,6 +220,8 @@ const submitIntakeDraft = async () => {
     mergeSourceState(result);
     appState.filters = {
       search: "",
+      stationId: "",
+      profileStatus: "",
       riskLevel: "",
       checkInStatus: "",
     };

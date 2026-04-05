@@ -91,6 +91,10 @@ const reservedCapabilities = ["合同信息", "费用账单", "护理计划", "�
             <dd>{{ elder.stationId || elder.station }}</dd>
           </div>
           <div>
+            <dt>档案状态</dt>
+            <dd>{{ elder.profileStatusLabel }}</dd>
+          </div>
+          <div>
             <dt>风险等级</dt>
             <dd>{{ elder.riskLevel }}</dd>
           </div>
@@ -112,6 +116,10 @@ const reservedCapabilities = ["合同信息", "费用账单", "护理计划", "�
       <article class="detail-panel">
         <h3>入住信息</h3>
         <dl class="detail-dl">
+          <div>
+            <dt>入住单号</dt>
+            <dd>{{ elder.admissionId }}</dd>
+          </div>
           <div>
             <dt>当前状态</dt>
             <dd>{{ elder.status }}</dd>

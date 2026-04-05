@@ -10,6 +10,8 @@ if str(SRC_DIR) not in sys.path:
 try:
     from fastapi.testclient import TestClient
 
+    from elder_service.application.repository import InMemoryElderProfileRepository
+    from elder_service.application.service import ElderService
     from elder_service.http.examples import (
         ELDER_PROFILE_CREATE_REQUEST_FIELDS,
         ELDER_PROFILE_RESPONSE_FIELDS,
@@ -35,7 +37,8 @@ except ModuleNotFoundError as exc:
 
 class ElderHttpApiTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.client = TestClient(create_app())
+        service = ElderService(InMemoryElderProfileRepository())
+        self.client = TestClient(create_app(service))
 
     def test_health_endpoint(self) -> None:
         response = self.client.get("/health")
@@ -166,6 +169,7 @@ class ElderHttpApiTest(unittest.TestCase):
         self.assertEqual(body["age"], expected_age)
         self.assertEqual(body["stay_info"]["room_id"], "A-101")
         self.assertEqual(body["stay_info"]["bed_id"], "A-101-02")
+        self.assertEqual(body["stay_info"]["admission_id"], "ADM-E-103")
         self.assertEqual(body["family_contacts"][0]["family_name"], "王家属")
 
     def test_invalid_birth_date_returns_422_even_when_age_is_present(self) -> None:
@@ -401,6 +405,8 @@ class ElderHttpApiTest(unittest.TestCase):
         response = self.client.get(
             "/elders",
             params={
+                "station_id": "station-heping-001",
+                "status": "active",
                 "risk_level": "high",
                 "check_in_status": "checked_in",
                 "page": 1,
@@ -410,12 +416,25 @@ class ElderHttpApiTest(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         body = response.json()
-        self.assertEqual(body["total"], 2)
+        self.assertEqual(body["total"], 1)
         self.assertEqual(body["page"], 1)
         self.assertEqual(body["page_size"], 1)
         self.assertEqual(len(body["items"]), 1)
         self.assertEqual(body["items"][0]["elder_id"], "E-202")
         self.assertEqual(body["items"][0]["stay_info"]["bed_id"], "A-201-01")
+        self.assertEqual(body["items"][0]["stay_info"]["admission_id"], "ADM-E-202")
+
+        risk_only_response = self.client.get(
+            "/elders",
+            params={
+                "risk_level": "high",
+                "check_in_status": "checked_in",
+                "page": 1,
+                "page_size": 10,
+            },
+        )
+        self.assertEqual(risk_only_response.status_code, 200)
+        self.assertEqual(risk_only_response.json()["total"], 2)
 
         search_response = self.client.get("/elders", params={"search": "吴"})
         self.assertEqual(search_response.status_code, 200)
@@ -423,6 +442,43 @@ class ElderHttpApiTest(unittest.TestCase):
         self.assertEqual(search_response.json()["items"][0]["elder_id"], "E-203")
         self.assertEqual(search_response.json()["items"][0]["station_id"], "station-heping-002")
         self.assertEqual(search_response.json()["items"][0]["stay_info"]["check_in_status"], "checked_in")
+
+        keyword_response = self.client.get("/elders", params={"keyword": "周"})
+        self.assertEqual(keyword_response.status_code, 200)
+        self.assertEqual(keyword_response.json()["total"], 1)
+        self.assertEqual(keyword_response.json()["items"][0]["elder_id"], "E-202")
+
+    def test_checked_in_bed_conflict_returns_409(self) -> None:
+        occupied_payload = {
+            "elder_id": "E-301",
+            "elder_code": "EC-301",
+            "full_name": "先入住长者",
+            "gender": "female",
+            "age": 81,
+            "risk_level": "high",
+            "status": "active",
+            "station_id": "station-heping-001",
+            "stay_info": {
+                "check_in_status": "checked_in",
+                "room_id": "A-301",
+                "bed_id": "A-301-01",
+                "check_in_date": "2026-04-05",
+            },
+            "family_contacts": [],
+        }
+        conflict_payload = {
+            **occupied_payload,
+            "elder_id": "E-302",
+            "elder_code": "EC-302",
+            "full_name": "后入住长者",
+        }
+
+        first_response = self.client.post("/elders", json=occupied_payload)
+        conflict_response = self.client.post("/elders", json=conflict_payload)
+
+        self.assertEqual(first_response.status_code, 201)
+        self.assertEqual(conflict_response.status_code, 409)
+        self.assertIn("already occupied", conflict_response.json()["detail"])
 
     def test_openapi_schema_exposes_stable_create_example(self) -> None:
         response = self.client.get("/openapi.json")
@@ -447,7 +503,9 @@ class ElderHttpApiTest(unittest.TestCase):
             set(family_contact_request_schema["properties"]),
             FAMILY_CONTACT_REQUEST_FIELDS,
         )
-        self.assertEqual(stay_info_request_schema["example"], STAY_INFO_EXAMPLE)
+        self.assertEqual(stay_info_request_schema["example"]["room_id"], "3B")
+        self.assertEqual(stay_info_request_schema["example"]["bed_id"], "3B-08")
+        self.assertNotIn("admission_id", stay_info_request_schema["example"])
         self.assertEqual(
             family_contact_request_schema["example"],
             PRIMARY_FAMILY_CONTACT_EXAMPLE,

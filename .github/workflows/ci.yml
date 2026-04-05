@@ -3,6 +3,12 @@ name: CI
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      run_init_elder_db:
+        description: "Run manual elder-service PostgreSQL schema initialization job"
+        required: false
+        default: false
+        type: boolean
   push:
     branches:
       - main
@@ -66,3 +72,46 @@ jobs:
             reports/master-agent/elder_mvp_dispatch.md
             reports/master-agent/dispatch
           if-no-files-found: warn
+
+  init-elder-db:
+    name: Init Elder DB Schema (Manual)
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_init_elder_db == true }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: elder_service
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d elder_service"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Wait for PostgreSQL service
+        run: |
+          for i in $(seq 1 30); do
+            pg_isready -h 127.0.0.1 -p 5432 -U postgres -d elder_service && exit 0
+            sleep 2
+          done
+          echo "PostgreSQL service did not become ready in time" >&2
+          exit 1
+        env:
+          PGPASSWORD: postgres
+
+      - name: Initialize elder-service schema
+        run: make init-elder-db
+        env:
+          ELDER_SERVICE_DB_HOST: 127.0.0.1
+          ELDER_SERVICE_DB_PORT: "5432"
+          ELDER_SERVICE_DB_NAME: elder_service
+          ELDER_SERVICE_DB_USER: postgres
+          ELDER_SERVICE_DB_PASSWORD: postgres

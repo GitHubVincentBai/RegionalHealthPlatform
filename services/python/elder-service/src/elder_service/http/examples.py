@@ -1,9 +1,14 @@
-STAY_INFO_EXAMPLE = {
+STAY_INFO_REQUEST_EXAMPLE = {
     "check_in_status": "checked_in",
     "room_id": "3B",
     "bed_id": "3B-08",
     "check_in_date": "2026-04-05",
     "notes": "corner bed",
+}
+
+STAY_INFO_EXAMPLE = {
+    "admission_id": "ADM-E-100",
+    **STAY_INFO_REQUEST_EXAMPLE,
 }
 
 PRIMARY_FAMILY_CONTACT_EXAMPLE = {
@@ -32,7 +37,7 @@ ELDER_PROFILE_CREATE_EXAMPLE = {
     "risk_level": "critical",
     "status": "active",
     "station_id": "station-heping-001",
-    "stay_info": STAY_INFO_EXAMPLE,
+    "stay_info": STAY_INFO_REQUEST_EXAMPLE,
     "family_contacts": [
         PRIMARY_FAMILY_CONTACT_EXAMPLE,
         SECONDARY_FAMILY_CONTACT_EXAMPLE,
@@ -105,6 +110,7 @@ ELDER_PROFILE_LIST_RESPONSE_FIELDS = {
 }
 
 STAY_INFO_RESPONSE_FIELDS = {
+    "admission_id",
     "check_in_status",
     "room_id",
     "bed_id",
@@ -112,7 +118,7 @@ STAY_INFO_RESPONSE_FIELDS = {
     "notes",
 }
 
-STAY_INFO_REQUEST_FIELDS = set(STAY_INFO_RESPONSE_FIELDS)
+STAY_INFO_REQUEST_FIELDS = STAY_INFO_RESPONSE_FIELDS - {"admission_id"}
 
 FAMILY_CONTACT_RESPONSE_FIELDS = {
     "family_name",

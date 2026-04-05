@@ -12,6 +12,10 @@ class ElderProfileNotFoundError(LookupError):
     pass
 
 
+class ElderBedOccupiedError(ValueError):
+    pass
+
+
 def _age_from_birth_date(birth_date: str) -> int:
     try:
         birth = date.fromisoformat(birth_date)
@@ -58,6 +62,18 @@ class ElderService:
         if self._repository.get(elder_id) is not None:
             raise ElderProfileAlreadyExistsError(f"elder profile {elder_id} already exists")
 
+        resolved_stay_info = stay_info or StayInfo()
+        if not resolved_stay_info.admission_id:
+            resolved_stay_info = StayInfo(
+                admission_id=f"ADM-{elder_id}",
+                check_in_status=resolved_stay_info.check_in_status,
+                room_id=resolved_stay_info.room_id,
+                bed_id=resolved_stay_info.bed_id,
+                check_in_date=resolved_stay_info.check_in_date,
+                notes=resolved_stay_info.notes,
+            )
+        self._ensure_bed_availability(elder_id=elder_id, stay_info=resolved_stay_info)
+
         resolved_age = resolve_profile_age(age, birth_date)
         profile = ElderProfile(
             elder_id=elder_id,
@@ -71,7 +87,7 @@ class ElderService:
             risk_level=risk_level,
             status=status,
             station_id=station_id,
-            stay_info=stay_info or StayInfo(),
+            stay_info=resolved_stay_info,
             family_contacts=family_contacts or [],
         )
         return self._repository.save(profile)
@@ -86,7 +102,9 @@ class ElderService:
         self,
         *,
         search: str | None = None,
+        station_id: str | None = None,
         risk_level: str | None = None,
+        status: str | None = None,
         check_in_status: str | None = None,
         page: int = 1,
         page_size: int = 20,
@@ -111,6 +129,20 @@ class ElderService:
                 if profile.risk_level.lower() == normalized_risk_level
             ]
 
+        if station_id:
+            normalized_station_id = station_id.strip().lower()
+            profiles = [
+                profile
+                for profile in profiles
+                if profile.station_id.lower() == normalized_station_id
+            ]
+
+        if status:
+            normalized_status = status.strip().lower()
+            profiles = [
+                profile for profile in profiles if profile.status.lower() == normalized_status
+            ]
+
         if check_in_status:
             normalized_check_in_status = check_in_status.strip().lower()
             profiles = [
@@ -125,3 +157,24 @@ class ElderService:
         start = (page - 1) * page_size
         end = start + page_size
         return profiles[start:end], total
+
+    def _ensure_bed_availability(self, *, elder_id: str, stay_info: StayInfo) -> None:
+        if (
+            stay_info.check_in_status != "checked_in"
+            or not stay_info.room_id
+            or not stay_info.bed_id
+        ):
+            return
+
+        for profile in self._repository.list_all():
+            if profile.elder_id == elder_id:
+                continue
+            if profile.stay_info.check_in_status != "checked_in":
+                continue
+            if profile.stay_info.room_id != stay_info.room_id:
+                continue
+            if profile.stay_info.bed_id != stay_info.bed_id:
+                continue
+            raise ElderBedOccupiedError(
+                f"bed {stay_info.bed_id} in room {stay_info.room_id} is already occupied"
+            )

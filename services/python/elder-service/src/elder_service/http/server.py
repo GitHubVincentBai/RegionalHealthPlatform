@@ -5,6 +5,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, status
 from typing import Annotated
 
 from elder_service.application.service import (
+    ElderBedOccupiedError,
     ElderProfileAlreadyExistsError,
     ElderProfileNotFoundError,
     ElderService,
@@ -40,15 +41,20 @@ def create_app(service: ElderService | None = None) -> FastAPI:
     @app.get("/elders", response_model=ElderProfileListResponse)
     def list_profiles(
         search: str | None = None,
+        keyword: str | None = None,
+        station_id: str | None = None,
         risk_level: str | None = None,
+        status: str | None = None,
         check_in_status: str | None = None,
         page: Annotated[int, Query(ge=1)] = 1,
         page_size: Annotated[int, Query(ge=1, le=100)] = 20,
         service: ElderService = Depends(get_service),
     ) -> ElderProfileListResponse:
         items, total = service.list_profiles(
-            search=search,
+            search=search or keyword,
+            station_id=station_id,
             risk_level=risk_level,
+            status=status,
             check_in_status=check_in_status,
             page=page,
             page_size=page_size,
@@ -95,6 +101,8 @@ def create_app(service: ElderService | None = None) -> FastAPI:
                 family_contacts=[contact.to_domain() for contact in payload.family_contacts],
             )
         except ElderProfileAlreadyExistsError as exc:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        except ElderBedOccupiedError as exc:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
         except ValueError as exc:
             raise HTTPException(status_code=HTTP_422_STATUS, detail=str(exc)) from exc

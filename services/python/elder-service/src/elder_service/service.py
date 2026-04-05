@@ -4,7 +4,11 @@ from elder_service.domain.models import ElderProfile, FamilyContact, StayInfo
 
 
 def create_default_service() -> ElderService:
-    return ElderService(InMemoryElderProfileRepository())
+    from elder_service.infrastructure.postgres_repository import (
+        PostgresElderProfileRepository,
+    )
+
+    return ElderService(PostgresElderProfileRepository.from_env())
 
 
 def create_elder_profile(
@@ -22,7 +26,7 @@ def create_elder_profile(
     stay_info: StayInfo | None = None,
     family_contacts: list[FamilyContact] | None = None,
 ) -> ElderProfile:
-    service = create_default_service()
+    service = ElderService(InMemoryElderProfileRepository())
     return service.create_profile(
         elder_id=elder_id,
         elder_code=elder_code,

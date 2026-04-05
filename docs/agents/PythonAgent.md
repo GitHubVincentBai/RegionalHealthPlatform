@@ -74,11 +74,11 @@ Python 侧优先负责以下类型能力：
 
 可优先采用如下方向，但需结合项目现状判断：
 
-- Web API：FastAPI、Django Ninja、Django
+- Web API：FastAPI
 - ORM：SQLAlchemy 或 Django ORM
 - 异步任务：Celery、RQ、APScheduler
 - 缓存与消息：Redis
-- 关系数据库：PostgreSQL 或 MySQL
+- 关系数据库：PostgreSQL
 - 时序或分析：按需要接入时序库存储健康数据
 
 不要机械套框架，要说明为何适合当前任务。

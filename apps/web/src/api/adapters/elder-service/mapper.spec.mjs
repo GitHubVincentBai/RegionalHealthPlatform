@@ -18,6 +18,7 @@ describe("elder service mapper", () => {
       risk_level: "medium",
       current_stay_status: "checked_in",
       stay_info: {
+        admission_id: "ADM-E-5001",
         check_in_status: "checked_in",
         room_id: "A-502",
         bed_id: "A-502-02",
@@ -38,6 +39,8 @@ describe("elder service mapper", () => {
     assert.equal(elder.status, "已入住");
     assert.equal(elder.gender, "女");
     assert.equal(elder.station, "station-heping");
+    assert.equal(elder.admissionId, "ADM-E-5001");
+    assert.equal(elder.profileStatusLabel, "启用");
     assert.equal(elder.phone, "13600000001");
     assert.equal(elder.room, "A-502");
     assert.equal(elder.family, "吴女士");

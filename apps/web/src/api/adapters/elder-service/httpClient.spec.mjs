@@ -26,12 +26,15 @@ describe("createElderServiceHttpClient", () => {
       },
     });
 
-    await client.listElders({ page: 2, page_size: 10, search: "张" });
+    await client.listElders({ page: 2, page_size: 10, search: "张", station_id: "station-heping-001", status: "active" });
     await client.getElder("E-3001");
     await client.createElder({ elder_id: "E-3001", full_name: "张桂兰" });
 
     assert.equal(calls.length, 3);
-    assert.equal(calls[0].url, "http://127.0.0.1:8000/elders?page=2&page_size=10&search=%E5%BC%A0");
+    assert.equal(
+      calls[0].url,
+      "http://127.0.0.1:8000/elders?page=2&page_size=10&search=%E5%BC%A0&station_id=station-heping-001&status=active",
+    );
     assert.equal(calls[0].init.method, "GET");
     assert.equal(calls[0].init.headers.Accept, "application/json");
     assert.equal(calls[1].url, "http://127.0.0.1:8000/elders/E-3001");

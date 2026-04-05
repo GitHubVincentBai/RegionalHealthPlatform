@@ -48,6 +48,7 @@ class FamilyContact:
 
 @dataclass(slots=True)
 class StayInfo:
+    admission_id: str = ""
     check_in_status: str = "pre_admission"
     room_id: str = ""
     bed_id: str = ""
@@ -55,6 +56,7 @@ class StayInfo:
     notes: str = ""
 
     def __post_init__(self) -> None:
+        self.admission_id = self.admission_id.strip()
         self.check_in_status = _normalize_text(self.check_in_status, "check_in_status")
         self.room_id = self.room_id.strip()
         self.bed_id = self.bed_id.strip()
@@ -73,6 +75,7 @@ class StayInfo:
 
     def to_dict(self) -> dict[str, object]:
         return {
+            "admission_id": self.admission_id,
             "check_in_status": self.check_in_status,
             "room_id": self.room_id,
             "bed_id": self.bed_id,

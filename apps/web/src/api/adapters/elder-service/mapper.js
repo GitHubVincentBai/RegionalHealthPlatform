@@ -55,6 +55,17 @@ export function mapCheckInStatusToApi(value) {
   return CHECK_IN_STATUS_TO_API[trimText(value, "待入住")] || String(value || "pre_admission").toLowerCase();
 }
 
+export function mapProfileStatusLabel(value) {
+  const normalized = String(value || "").toLowerCase();
+  if (normalized === "inactive") {
+    return "停用";
+  }
+  if (normalized === "archived") {
+    return "归档";
+  }
+  return "启用";
+}
+
 export function createGeneratedElderId() {
   return `E-${Date.now()}`;
 }
@@ -78,9 +89,11 @@ export function mapElderProfileToViewModel(profile) {
     riskLevel: mapRiskLevelLabel(profile.risk_level, Boolean(profile.is_high_risk)),
     status: mapCheckInStatusLabel(currentStayStatus),
     profileStatus: trimText(profile.status, "active"),
+    profileStatusLabel: mapProfileStatusLabel(profile.status),
     currentStayStatus,
     station: stationId || "待补充",
     stationId,
+    admissionId: trimText(stayInfo.admission_id, "待生成"),
     room: trimText(stayInfo.room_id, "待安排"),
     bed: trimText(stayInfo.bed_id, "待安排"),
     family: trimText(primaryContact?.family_name, "待补充"),

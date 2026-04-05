@@ -10,11 +10,16 @@ if str(SRC_DIR) not in sys.path:
 
 from elder_service.application.repository import InMemoryElderProfileRepository
 from elder_service.application.service import (
+    ElderBedOccupiedError,
     ElderProfileAlreadyExistsError,
     ElderProfileNotFoundError,
     ElderService,
 )
 from elder_service.domain.models import FamilyContact, StayInfo
+from elder_service.infrastructure.postgres_repository import (
+    PostgresElderProfileRepository,
+    build_postgres_dsn_from_env,
+)
 from elder_service.service import create_elder_profile
 
 SERVICE_DIR = Path(__file__).resolve().parents[1]
@@ -113,6 +118,7 @@ class ElderServiceTest(unittest.TestCase):
         expected_age = today.year - 1940 - ((today.month, today.day) < (1, 1))
         self.assertEqual(created.birth_date, "1940-01-01")
         self.assertEqual(created.age, expected_age)
+        self.assertEqual(created.stay_info.admission_id, "ADM-E-001A")
         self.assertEqual(created.stay_info.room_id, "A-101")
         self.assertEqual(created.family_contacts[0].family_name, "王家属")
 
@@ -181,9 +187,72 @@ class ElderServiceTest(unittest.TestCase):
         self.assertEqual(total, 1)
         self.assertEqual(len(items), 1)
         self.assertEqual(service.get_profile("E-002").elder_code, "EC-002")
+        self.assertEqual(service.get_profile("E-002").stay_info.admission_id, "ADM-E-002")
         self.assertEqual(service.get_profile("E-002").stay_info.room_id, "2A")
         self.assertEqual(service.get_profile("E-002").station_id, "station-heping-002")
         self.assertEqual(service.get_profile("E-002").family_contacts[0].family_name, "李家属")
+
+    def test_checked_in_bed_conflict_is_rejected(self) -> None:
+        service = ElderService(InMemoryElderProfileRepository())
+        service.create_profile(
+            elder_id="E-010",
+            elder_code="EC-010",
+            full_name="先入住",
+            gender="male",
+            age=77,
+            station_id="station-heping-001",
+            stay_info=StayInfo(
+                check_in_status="checked_in",
+                room_id="A-101",
+                bed_id="A-101-01",
+                check_in_date="2026-04-05",
+            ),
+        )
+
+        with self.assertRaisesRegex(ElderBedOccupiedError, "already occupied"):
+            service.create_profile(
+                elder_id="E-011",
+                elder_code="EC-011",
+                full_name="床位冲突",
+                gender="female",
+                age=78,
+                station_id="station-heping-001",
+                stay_info=StayInfo(
+                    check_in_status="checked_in",
+                    room_id="A-101",
+                    bed_id="A-101-01",
+                    check_in_date="2026-04-06",
+                ),
+            )
+
+    def test_postgres_repository_builds_default_dsn_from_env(self) -> None:
+        dsn = build_postgres_dsn_from_env(
+            {
+                "ELDER_SERVICE_DB_HOST": "db.internal",
+                "ELDER_SERVICE_DB_PORT": "5433",
+                "ELDER_SERVICE_DB_NAME": "elder_service",
+                "ELDER_SERVICE_DB_USER": "elder_app",
+                "ELDER_SERVICE_DB_PASSWORD": "secret",
+                "ELDER_SERVICE_DB_SSLMODE": "require",
+            }
+        )
+
+        self.assertEqual(
+            dsn,
+            "postgresql://elder_app:secret@db.internal:5433/elder_service?sslmode=require",
+        )
+
+    def test_postgres_repository_prefers_explicit_dsn(self) -> None:
+        repository = PostgresElderProfileRepository.from_env(
+            {
+                "ELDER_SERVICE_DB_DSN": "postgresql://postgres:postgres@127.0.0.1:5432/custom_db?sslmode=disable"
+            }
+        )
+
+        self.assertEqual(
+            repository._dsn,
+            "postgresql://postgres:postgres@127.0.0.1:5432/custom_db?sslmode=disable",
+        )
 
     def test_duplicate_profile_rejected(self) -> None:
         service = ElderService(InMemoryElderProfileRepository())
@@ -410,6 +479,7 @@ class ElderServiceTest(unittest.TestCase):
         expected_dependencies = {
             "fastapi>=0.115,<1",
             "httpx>=0.27,<1",
+            "psycopg[binary]>=3.2,<4",
             "uvicorn>=0.30,<1",
         }
 

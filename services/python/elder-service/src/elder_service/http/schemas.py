@@ -9,6 +9,7 @@ from elder_service.http.examples import (
     ELDER_PROFILE_RESPONSE_EXAMPLE,
     PRIMARY_FAMILY_CONTACT_EXAMPLE,
     STAY_INFO_EXAMPLE,
+    STAY_INFO_REQUEST_EXAMPLE,
 )
 
 
@@ -51,7 +52,9 @@ class FamilyContactResponse(BaseModel):
 
 
 class StayInfoRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", json_schema_extra={"example": STAY_INFO_EXAMPLE})
+    model_config = ConfigDict(
+        extra="forbid", json_schema_extra={"example": STAY_INFO_REQUEST_EXAMPLE}
+    )
 
     check_in_status: str = Field(default="pre_admission", min_length=1)
     room_id: str = ""
@@ -72,6 +75,7 @@ class StayInfoRequest(BaseModel):
 class StayInfoResponse(BaseModel):
     model_config = ConfigDict(json_schema_extra={"example": STAY_INFO_EXAMPLE})
 
+    admission_id: str
     check_in_status: str
     room_id: str
     bed_id: str
@@ -81,6 +85,7 @@ class StayInfoResponse(BaseModel):
     @classmethod
     def from_domain(cls, stay_info: StayInfo) -> "StayInfoResponse":
         return cls(
+            admission_id=stay_info.admission_id,
             check_in_status=stay_info.check_in_status,
             room_id=stay_info.room_id,
             bed_id=stay_info.bed_id,

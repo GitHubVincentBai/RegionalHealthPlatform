@@ -6,7 +6,7 @@ GO_IOT_DIR := $(CURDIR)/services/go/iot-gateway
 VERIFY_STATUS ?= 通过
 VERIFY_SUMMARY ?= 本次已完成 make verify。
 
-.PHONY: help format lint test build verify refresh-supervision check-docs check-frontend status-report dispatch-report status-watch auto-drive auto-exec auto-watch auto-reset-circuits launchd-install launchd-uninstall launchd-status prepare-python-elder-service format-web lint-web test-web build-web format-python-elder-service lint-python-elder-service test-python-elder-service build-python-elder-service test-elder-integration-smoke format-go-iot-gateway lint-go-iot-gateway test-go-iot-gateway build-go-iot-gateway
+.PHONY: help format lint test build verify refresh-supervision check-docs check-frontend status-report dispatch-report status-watch auto-drive auto-exec auto-watch auto-reset-circuits launchd-install launchd-uninstall launchd-status prepare-python-elder-service init-elder-db format-web lint-web test-web build-web format-python-elder-service lint-python-elder-service test-python-elder-service build-python-elder-service test-elder-integration-smoke format-go-iot-gateway lint-go-iot-gateway test-go-iot-gateway build-go-iot-gateway
 
 help:
 	@echo "Available targets:"
@@ -17,6 +17,7 @@ help:
 	@echo "  make verify       - run docs, lint, test, and build checks"
 	@echo "  make refresh-supervision - refresh MasterAgent supervision artifacts after a completed verify run"
 	@echo "  make prepare-python-elder-service - bootstrap the elder-service verify virtualenv"
+	@echo "  make init-elder-db - initialize elder-service PostgreSQL tables from SQL schema"
 	@echo "  make test-elder-integration-smoke - run the first supported Elder MVP smoke asset under tests/integration"
 	@echo "  make check-docs   - verify required governance documents exist"
 	@echo "  make status-report - generate the MasterAgent elder MVP progress report"
@@ -181,6 +182,14 @@ prepare-python-elder-service:
 		bash scripts/run_python_elder_checks.sh prepare; \
 	else \
 		echo "[python] skipped: $(PYTHON_ELDER_DIR)/pyproject.toml not found"; \
+	fi
+
+init-elder-db:
+	@echo "==> init-elder-db"
+	@if [ -f $(PYTHON_ELDER_DIR)/scripts/init_postgres_schema.sh ]; then \
+		bash $(PYTHON_ELDER_DIR)/scripts/init_postgres_schema.sh; \
+	else \
+		echo "[python] skipped: $(PYTHON_ELDER_DIR)/scripts/init_postgres_schema.sh not found"; \
 	fi
 
 format-python-elder-service:

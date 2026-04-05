@@ -21,6 +21,8 @@ EXECUTOR_DIR = REPO_ROOT / "reports/master-agent/executor"
 PROMPT_DIR = EXECUTOR_DIR / "prompts"
 RUN_DIR = EXECUTOR_DIR / "runs"
 AGENT_RUNTIME_DIR = EXECUTOR_DIR / "agents"
+MASTER_TRACE_DIR = EXECUTOR_DIR / "master-agent-traces"
+MASTER_TRACE_INDEX = MASTER_TRACE_DIR / "timeline.jsonl"
 STATE_FILE = EXECUTOR_DIR / "state.json"
 LAST_PROMPT_FILE = EXECUTOR_DIR / "next_agent_prompt.md"
 LAST_RESULT_FILE = EXECUTOR_DIR / "last_result.json"
@@ -50,7 +52,7 @@ def now_iso() -> str:
 
 
 def ensure_dirs() -> None:
-    for path in [EXECUTOR_DIR, PROMPT_DIR, RUN_DIR, AGENT_RUNTIME_DIR, CODEX_HOME_DIR]:
+    for path in [EXECUTOR_DIR, PROMPT_DIR, RUN_DIR, AGENT_RUNTIME_DIR, MASTER_TRACE_DIR, CODEX_HOME_DIR]:
         path.mkdir(parents=True, exist_ok=True)
     sync_codex_runtime_seed()
 
@@ -310,11 +312,14 @@ def select_runnable_orders(
     orders: list[status_report.WorkOrder],
     runtime_state: dict[str, object],
     max_parallel: int,
+    master_fallback_interval_seconds: int,
 ) -> list[status_report.WorkOrder]:
     report_lookup = status_report.report_map(reports)
     selected: list[status_report.WorkOrder] = []
+    master_order: status_report.WorkOrder | None = None
     for order in orders:
         if order.agent_name == "MasterAgent":
+            master_order = order
             continue
         if order.dispatch_state != "ACTIVE":
             continue
@@ -330,7 +335,69 @@ def select_runnable_orders(
         selected.append(order)
         if len(selected) >= max(max_parallel, 1):
             break
+
+    if selected:
+        return selected
+
+    # Fallback: when no specialized ACTIVE agent can run, allow MasterAgent to
+    # execute one orchestration round so supervision can continue progressing.
+    if master_order:
+        is_open, _ = circuit_breaker_open(runtime_state, master_order.agent_name)
+        if is_open:
+            return selected
+        last_master_fallback_at = parse_iso_datetime(
+            runtime_state.get("last_master_fallback_at")
+            if isinstance(runtime_state.get("last_master_fallback_at"), str)
+            else None
+        )
+        now = dt.datetime.now().astimezone()
+        if (
+            last_master_fallback_at is None
+            or (now - last_master_fallback_at).total_seconds() >= max(master_fallback_interval_seconds, 1)
+        ):
+            return [master_order]
+
     return selected
+
+
+def write_master_trace(
+    *,
+    agent_result: dict[str, object],
+    prompt: str,
+    prompt_path: Path,
+) -> None:
+    if agent_result.get("agent_name") != "MasterAgent":
+        return
+
+    run_dir = Path(str(agent_result.get("run_dir", "")))
+    if not run_dir.exists():
+        return
+
+    trace_stamp = dt.datetime.now().astimezone().strftime("%Y%m%d-%H%M%S")
+    trace_dir = MASTER_TRACE_DIR / trace_stamp
+    trace_dir.mkdir(parents=True, exist_ok=True)
+
+    (trace_dir / "prompt.md").write_text(prompt, encoding="utf-8")
+    if prompt_path.exists():
+        shutil.copy2(prompt_path, trace_dir / "prompt.source.md")
+
+    for name in ["stdout.log", "stderr.log", "last_message.txt"]:
+        src = run_dir / name
+        if src.exists():
+            shutil.copy2(src, trace_dir / name)
+
+    summary = {
+        "captured_at": now_iso(),
+        "agent_name": "MasterAgent",
+        "run_dir": str(run_dir),
+        "trace_dir": str(trace_dir),
+        "prompt_file": str(prompt_path),
+        "return_code": agent_result.get("return_code"),
+        "last_message_preview": agent_result.get("last_message_preview", ""),
+    }
+    write_json(trace_dir / "summary.json", summary)
+    with MASTER_TRACE_INDEX.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(summary, ensure_ascii=False) + "\n")
 
 
 def build_prompt(
@@ -461,7 +528,13 @@ def execute_one_cycle(
     reconcile_circuit_breakers(runtime_state, failure_threshold, cooldown_seconds)
     reports, orders = refresh_dispatch(run_verify=run_verify)
     report_lookup = status_report.report_map(reports)
-    selected_orders = select_runnable_orders(reports, orders, runtime_state, max_parallel)
+    selected_orders = select_runnable_orders(
+        reports,
+        orders,
+        runtime_state,
+        max_parallel,
+        master_fallback_interval_seconds=max(cooldown_seconds, 1),
+    )
 
     result: dict[str, object] = {
         "generated_at": now_iso(),
@@ -529,6 +602,7 @@ def execute_one_cycle(
             "prompt_file": str(prompts[0][2]),
             "prompt_files": [str(prompt_path) for _, _, prompt_path in prompts],
             "execute_mode": "codex-exec" if execute else "dry-run",
+            "last_master_fallback_at": now_iso() if selected_orders[0].agent_name == "MasterAgent" else runtime_state.get("last_master_fallback_at"),
         }
     )
     update_failure_control(runtime_state, failure_threshold, cooldown_seconds)
@@ -543,13 +617,15 @@ def execute_one_cycle(
         run_root = RUN_DIR / f"{run_stamp}-{order.agent_name}"
         run_root.mkdir(parents=True, exist_ok=True)
         return_code, stdout, last_message = run_codex_exec(codex_bin, order.agent_name, prompt, run_root, model)
-        return {
+        agent_result = {
             "agent_name": order.agent_name,
             "return_code": return_code,
             "run_dir": str(run_root),
             "prompt_file": str(prompt_path),
             "last_message_preview": last_message[:1000],
         }
+        write_master_trace(agent_result=agent_result, prompt=prompt, prompt_path=prompt_path)
+        return agent_result
 
     per_agent_results: list[dict[str, object]] = []
     max_workers = max(1, min(max_parallel, len(prompts)))
@@ -593,6 +669,7 @@ def execute_one_cycle(
             "prompt_file": str(prompts[0][2]),
             "prompt_files": [str(prompt_path) for _, _, prompt_path in prompts],
             "execute_mode": "codex-exec",
+            "last_master_fallback_at": now_iso() if selected_orders[0].agent_name == "MasterAgent" else runtime_state.get("last_master_fallback_at"),
         }
     )
     write_json(STATE_FILE, runtime_state)

@@ -23,6 +23,8 @@ PYTHONPATH=src python -m elder_service
 ```
 
 The service uses `uvicorn` behind the `elder_service.http.server:app` entrypoint.
+At runtime, the default repository is a PostgreSQL-backed repository rather than
+an in-memory store.
 
 Current HTTP API:
 
@@ -36,6 +38,47 @@ Install runtime and test dependencies:
 ```bash
 python3 -m pip install -e ".[test]"
 ```
+
+Default PostgreSQL environment variables:
+
+```bash
+export ELDER_SERVICE_DB_HOST=127.0.0.1
+export ELDER_SERVICE_DB_PORT=5432
+export ELDER_SERVICE_DB_NAME=regional_health_elder
+export ELDER_SERVICE_DB_USER="${USER}"
+export ELDER_SERVICE_DB_PASSWORD=
+export ELDER_SERVICE_DB_SSLMODE=disable
+```
+
+Initialize the database, Elder MVP tables, and the current联调 demo data explicitly:
+
+```bash
+bash services/python/elder-service/scripts/init_postgres_database.sh
+bash services/python/elder-service/scripts/init_postgres_schema.sh
+bash services/python/elder-service/scripts/seed_postgres_demo_data.sh
+```
+
+SQL file locations:
+
+- `services/python/elder-service/sql/000_regional_health_elder_database.sql`
+- `services/python/elder-service/sql/001_elder_mvp_schema.sql`
+- `services/python/elder-service/sql/002_elder_mvp_seed.sql`
+
+Shell entrypoints:
+
+- `services/python/elder-service/scripts/init_postgres_database.sh`
+- `services/python/elder-service/scripts/init_postgres_schema.sh`
+- `services/python/elder-service/scripts/seed_postgres_demo_data.sh`
+
+The checked-in seed SQL mirrors the current live `regional_health_elder` demo
+dataset used for end-to-end verification:
+
+- `13` elder profiles
+- `13` primary family contacts
+- includes `E-9031 / EC-9031 / 前端新录入老人31`, which was created through the frontend proxy path
+
+You can also provide a single `ELDER_SERVICE_DB_DSN` or `DATABASE_URL`.
+The service will create the required Elder MVP tables automatically on first use.
 
 `.[test]` is the expected local entry for the HTTP suite. The service uses
 `unittest`, but the runtime dependencies required by `fastapi.testclient`
@@ -148,6 +191,7 @@ HTTP suites from the same isolated environment used by repository-level checks.
 - `status`
 - `station_id`
 - `stay_info.check_in_status`
+- `stay_info.admission_id`
 - `stay_info.room_id`
 - `stay_info.bed_id`
 - `stay_info.check_in_date`
