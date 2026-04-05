@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Query, status
+from typing import Annotated
 
 from elder_service.application.service import (
     ElderProfileAlreadyExistsError,
@@ -33,9 +34,27 @@ def create_app(service: ElderService | None = None) -> FastAPI:
         return {"status": "ok"}
 
     @app.get("/elders", response_model=ElderProfileListResponse)
-    def list_profiles(service: ElderService = Depends(get_service)) -> ElderProfileListResponse:
-        items = [ElderProfileResponse.from_domain(profile) for profile in service.list_profiles()]
-        return ElderProfileListResponse(items=items)
+    def list_profiles(
+        search: str | None = None,
+        risk_level: str | None = None,
+        check_in_status: str | None = None,
+        page: Annotated[int, Query(ge=1)] = 1,
+        page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+        service: ElderService = Depends(get_service),
+    ) -> ElderProfileListResponse:
+        items, total = service.list_profiles(
+            search=search,
+            risk_level=risk_level,
+            check_in_status=check_in_status,
+            page=page,
+            page_size=page_size,
+        )
+        return ElderProfileListResponse(
+            items=[ElderProfileResponse.from_domain(profile) for profile in items],
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
 
     @app.get("/elders/{elder_id}", response_model=ElderProfileResponse)
     def get_profile(elder_id: str, service: ElderService = Depends(get_service)) -> ElderProfileResponse:

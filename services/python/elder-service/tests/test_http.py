@@ -65,6 +65,64 @@ class ElderHttpApiTest(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertIn("not found", response.json()["detail"])
 
+    def test_list_endpoint_supports_filters_and_pagination(self) -> None:
+        payloads = [
+            {
+                "elder_id": "E-201",
+                "elder_code": "EC-201",
+                "full_name": "孙阿姨",
+                "age": 71,
+                "risk_level": "medium",
+                "stay_info": {"check_in_status": "pre_admission"},
+                "family_contacts": [],
+            },
+            {
+                "elder_id": "E-202",
+                "elder_code": "EC-202",
+                "full_name": "周爷爷",
+                "age": 83,
+                "risk_level": "high",
+                "stay_info": {"check_in_status": "checked_in"},
+                "family_contacts": [],
+            },
+            {
+                "elder_id": "E-203",
+                "elder_code": "EC-203",
+                "full_name": "吴奶奶",
+                "age": 86,
+                "risk_level": "high",
+                "stay_info": {"check_in_status": "checked_in"},
+                "family_contacts": [],
+            },
+        ]
+
+        for payload in payloads:
+            response = self.client.post("/elders", json=payload)
+            self.assertEqual(response.status_code, 201)
+
+        response = self.client.get(
+            "/elders",
+            params={
+                "risk_level": "high",
+                "check_in_status": "checked_in",
+                "page": 1,
+                "page_size": 1,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["total"], 2)
+        self.assertEqual(body["page"], 1)
+        self.assertEqual(body["page_size"], 1)
+        self.assertEqual(len(body["items"]), 1)
+        self.assertEqual(body["items"][0]["elder_id"], "E-202")
+
+        search_response = self.client.get("/elders", params={"search": "吴"})
+        self.assertEqual(search_response.status_code, 200)
+        self.assertEqual(search_response.json()["total"], 1)
+        self.assertEqual(search_response.json()["items"][0]["elder_id"], "E-203")
+
 
 if __name__ == "__main__":
     unittest.main()

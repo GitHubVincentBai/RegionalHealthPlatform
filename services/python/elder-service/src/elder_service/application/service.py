@@ -45,5 +45,46 @@ class ElderService:
             raise ElderProfileNotFoundError(f"elder profile {elder_id} not found")
         return profile
 
-    def list_profiles(self) -> list[ElderProfile]:
-        return self._repository.list_all()
+    def list_profiles(
+        self,
+        *,
+        search: str | None = None,
+        risk_level: str | None = None,
+        check_in_status: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[ElderProfile], int]:
+        profiles = self._repository.list_all()
+
+        if search:
+            normalized_search = search.strip().lower()
+            profiles = [
+                profile
+                for profile in profiles
+                if normalized_search in profile.elder_id.lower()
+                or normalized_search in profile.elder_code.lower()
+                or normalized_search in profile.full_name.lower()
+            ]
+
+        if risk_level:
+            normalized_risk_level = risk_level.strip().lower()
+            profiles = [
+                profile
+                for profile in profiles
+                if profile.risk_level.lower() == normalized_risk_level
+            ]
+
+        if check_in_status:
+            normalized_check_in_status = check_in_status.strip().lower()
+            profiles = [
+                profile
+                for profile in profiles
+                if profile.stay_info.check_in_status.lower() == normalized_check_in_status
+            ]
+
+        profiles.sort(key=lambda profile: profile.elder_id)
+
+        total = len(profiles)
+        start = (page - 1) * page_size
+        end = start + page_size
+        return profiles[start:end], total

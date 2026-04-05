@@ -112,3 +112,6 @@ class ElderProfileResponse(BaseModel):
 
 class ElderProfileListResponse(BaseModel):
     items: list[ElderProfileResponse]
+    total: int
+    page: int
+    page_size: int
