@@ -59,8 +59,13 @@ The repository now has three bootstrap workspaces with explicit per-stack target
 - `format-web`, `lint-web`, `test-web`, `build-web`
 - `format-python-elder-service`, `lint-python-elder-service`, `test-python-elder-service`, `build-python-elder-service`
 - `format-go-iot-gateway`, `lint-go-iot-gateway`, `test-go-iot-gateway`, `build-go-iot-gateway`
+- `test-elder-integration-smoke`
 
 Use these targets when working on a single stack. Use `make verify` when you need the whole repository checked end to end.
+
+For `services/python/elder-service`, the repository-level checks bootstrap an isolated service-local virtualenv at `services/python/elder-service/.venv` and install dependencies from `pyproject.toml` with the `test` extra before running the service tests, HTTP tests, and the first supported Elder MVP smoke asset found under `tests/integration/` (`elder_mvp_smoke.py`, `elder_mvp_smoke.sh`, then `elder_create_query_smoke.sh`). The bootstrap script should reuse already-synced packages from that `.venv` when possible and only fall back to `pip install --no-build-isolation -e ...[test]` when the required runtime imports (`fastapi/httpx/uvicorn`) are missing. `make verify` and CI must use that isolated environment consistently instead of falling back to host Python packages, so missing runtime dependencies such as `fastapi` are caught in the unified gate.
+
+CI should also refresh the MasterAgent dispatch artifacts after `make verify`, so the repository keeps a current supervision snapshot alongside the unified validation result.
 
 ## Submission Rules
 

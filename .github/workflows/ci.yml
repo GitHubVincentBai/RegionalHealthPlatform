@@ -38,28 +38,19 @@ jobs:
         with:
           go-version-file: services/go/iot-gateway/go.mod
 
-      - name: Verify Frontend Skeleton
-        if: ${{ hashFiles('apps/web/package.json') != '' }}
-        run: |
-          npm --prefix apps/web run format
-          npm --prefix apps/web run lint
-          npm --prefix apps/web run test
-          npm --prefix apps/web run build
-
-      - name: Verify Python Skeleton
-        if: ${{ hashFiles('services/python/elder-service/pyproject.toml') != '' }}
-        run: |
-          PYTHONPATH=services/python/elder-service/src python -m compileall services/python/elder-service/src
-          PYTHONPATH=services/python/elder-service/src python -m unittest discover -s services/python/elder-service/tests
-
-      - name: Verify Go Skeleton
-        if: ${{ hashFiles('services/go/iot-gateway/go.mod') != '' }}
-        run: |
-          cd services/go/iot-gateway
-          gofmt -w $(find . -name '*.go' -type f)
-          go vet ./...
-          go test ./...
-          go build ./...
-
       - name: Run unified verification
         run: make verify
+
+      - name: Generate MasterAgent supervision reports
+        run: python3 scripts/master_status_report.py --skip-verify --verify-status 通过 --verify-summary "CI job 已完成 make verify。"
+
+      - name: Upload supervision artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: master-agent-reports
+          path: |
+            reports/master-agent/elder_mvp_status.md
+            reports/master-agent/elder_mvp_dispatch.md
+            reports/master-agent/dispatch
+          if-no-files-found: warn

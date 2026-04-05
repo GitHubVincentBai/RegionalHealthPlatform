@@ -8,14 +8,23 @@ const elderArchiveVue = readFileSync(new URL("../src/views/elder/ElderArchivePag
 const elderDetailVue = readFileSync(new URL("../src/views/elder/ElderDetailPage.vue", import.meta.url), "utf8");
 const elderIntakeVue = readFileSync(new URL("../src/views/elder/ElderIntakePage.vue", import.meta.url), "utf8");
 const elderMock = readFileSync(new URL("../src/modules/elder/mock.js", import.meta.url), "utf8");
+const elderApiIndex = readFileSync(new URL("../src/api/adapters/elder-service/index.js", import.meta.url), "utf8");
+const elderService = readFileSync(new URL("../src/api/adapters/elder-service/archiveService.js", import.meta.url), "utf8");
+const elderAdapter = readFileSync(new URL("../src/api/adapters/elder-service/mapper.js", import.meta.url), "utf8");
+const appViews = readFileSync(new URL("../src/navigation/appViews.js", import.meta.url), "utf8");
 
 if (!mainJs.includes('createApp')) {
   console.error("[web:lint] Vue createApp bootstrap is missing");
   process.exit(1);
 }
 
-if (!appVue.includes("ElderArchivePage") || !appVue.includes("ElderIntakePage")) {
+if (!appVue.includes("ElderArchivePage") || !appVue.includes("createElderArchiveService")) {
   console.error("[web:lint] App.vue elder workflow mount is missing");
+  process.exit(1);
+}
+
+if (!appViews.includes("APP_VIEWS") || !appViews.includes("长者入住办理")) {
+  console.error("[web:lint] app view registry is missing");
   process.exit(1);
 }
 
@@ -36,6 +45,21 @@ if (!elderDetailVue.includes("长者详情") || !elderIntakeVue.includes("入住
 
 if (!elderMock.includes("elderArchiveModel") || !elderMock.includes("createElderDraft")) {
   console.error("[web:lint] elder mock data layer is missing");
+  process.exit(1);
+}
+
+if (!elderService.includes("loadArchive") || !elderService.includes("getElder") || !elderService.includes("createElder")) {
+  console.error("[web:lint] elder service adapter is missing create/list/get handlers");
+  process.exit(1);
+}
+
+if (!elderApiIndex.includes("createElderArchiveService") || !elderApiIndex.includes("createElderServiceHttpClient")) {
+  console.error("[web:lint] elder api index export is missing");
+  process.exit(1);
+}
+
+if (!elderAdapter.includes("buildCreatePayload") || !elderAdapter.includes("mapElderProfileToViewModel")) {
+  console.error("[web:lint] elder adapter mapping layer is missing");
   process.exit(1);
 }
 

@@ -9,8 +9,12 @@ description = "Regional Health Platform elder service skeleton"
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115,<1",
+  "httpx>=0.27,<1",
   "uvicorn>=0.30,<1",
 ]
+
+[project.optional-dependencies]
+test = []
 
 [tool.setuptools]
 package-dir = {"" = "src"}

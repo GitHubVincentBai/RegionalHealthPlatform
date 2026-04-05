@@ -65,6 +65,8 @@ coverage.out
 *.seed
 *.sqlite
 *.db
+.codex-runtime/
+~$*
 
 # Secrets and keys
 *.pem

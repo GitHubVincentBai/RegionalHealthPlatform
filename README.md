@@ -124,6 +124,88 @@ make verify
 
 当前仓库仍以文档和治理模板为主，因此如果还没有 `package.json`、`pyproject.toml`、`requirements*.txt`、`go.mod`，对应检查会被显式跳过，不会误报失败。
 
+如果需要由 `MasterAgent` 做 Elder 入住首批 MVP 的红黄绿灯监督汇报，可使用：
+
+```bash
+make status-report
+make dispatch-report
+make status-watch
+```
+
+其中：
+
+- `make status-report`
+  生成一次监督报告，同时生成自动派工板，并写入 `reports/master-agent/elder_mvp_status.md`
+- `make dispatch-report`
+  快速刷新自动派工板与各 Agent 工单，不重复跑一次 `make verify`
+- `make status-watch`
+  每 300 秒刷新一次监督报告和派工单，适合项目例会或跟踪收口阶段使用
+
+自动派工产物包括：
+
+- `reports/master-agent/elder_mvp_dispatch.md`
+  MasterAgent 总派工板
+- `reports/master-agent/dispatch/*.md`
+  各 Agent 的独立工作单，只描述各自职责范围内的待办、阻塞和回传对象
+
+如果需要把这套监督/派工继续接入本地 Codex 自动执行，可使用：
+
+```bash
+make auto-drive
+make auto-exec
+make auto-watch
+```
+
+其中：
+
+- `make auto-drive`
+  只刷新监督/派工结果，并生成当前下一个可执行 Agent 的 Codex prompt，不直接调用 AI 执行
+- `make auto-exec`
+  调用本地 `codex exec` 自动执行一轮当前可执行 Agent
+- `make auto-watch`
+  每 300 秒自动执行一轮，形成“刷新状态 -> 选中 Agent -> 生成 prompt -> Codex 执行 -> 再次刷新状态”的闭环骨架
+- 连续失败熔断
+  自动执行器默认在同一 Agent 连续失败 3 次后打开熔断，30 分钟内不再继续重试该 Agent，避免无限打转
+
+自动执行器产物包括：
+
+- `reports/master-agent/executor/state.json`
+  当前被选中的 Agent 与执行上下文
+- `reports/master-agent/executor/next_agent_prompt.md`
+  当前轮次发给本地 Codex 的执行 prompt
+- `reports/master-agent/executor/prompts/*.md`
+  历史 prompt
+- `reports/master-agent/executor/runs/*/`
+  每次 `codex exec` 的 stdout / stderr / last message 记录
+
+如果需要清空熔断状态并重新放行 Agent，可使用：
+
+```bash
+make auto-reset-circuits
+```
+
+如果希望在 macOS 上把 `make auto-watch` 做成用户级常驻任务，可使用：
+
+```bash
+make launchd-install
+make launchd-status
+make launchd-uninstall
+```
+
+其中：
+
+- `make launchd-install`
+  安装并启动 `com.regionalhealth.masteragent.autowatch` LaunchAgent
+- `make launchd-status`
+  查看当前 LaunchAgent 的 `launchctl` 状态
+- `make launchd-uninstall`
+  停止并移除该 LaunchAgent
+
+LaunchAgent 会把日志写到：
+
+- `reports/master-agent/launchd/stdout.log`
+- `reports/master-agent/launchd/stderr.log`
+
 ## 仓库目录结构
 
 当前仓库建议按以下方式理解：

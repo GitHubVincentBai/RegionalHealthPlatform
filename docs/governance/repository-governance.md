@@ -88,3 +88,5 @@ Use a small, predictable label set.
 - `services/go/iot-gateway` is the current Go service bootstrap workspace
 - `make verify` is expected to validate the active skeletons without requiring future code to exist yet
 - GitHub Actions should use the same conditional skeleton checks as the local Makefile
+- The Python verification path should install `elder-service` into `services/python/elder-service/.venv` with its `test` extra, reuse already-synced packages in offline runs when possible, verify `fastapi/httpx/uvicorn` imports there, and run the elder-service service tests, HTTP tests, and the first supported Elder MVP smoke asset discovered under `tests/integration/`
+- CI should publish the generated `reports/master-agent/*` dispatch artifacts so MasterAgent supervision remains visible after each unified verification run

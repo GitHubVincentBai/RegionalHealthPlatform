@@ -59,8 +59,14 @@ class ElderProfile:
     elder_id: str
     elder_code: str
     full_name: str
+    gender: str
     age: int
     risk_level: str
+    birth_date: str = ""
+    phone: str = ""
+    id_card: str = ""
+    status: str = "active"
+    station_id: str = ""
     stay_info: StayInfo = field(default_factory=StayInfo)
     family_contacts: list[FamilyContact] = field(default_factory=list)
 
@@ -68,9 +74,15 @@ class ElderProfile:
         self.elder_id = _normalize_text(self.elder_id, "elder_id")
         self.elder_code = _normalize_text(self.elder_code, "elder_code")
         self.full_name = _normalize_text(self.full_name, "full_name")
+        self.gender = _normalize_text(self.gender, "gender")
         if self.age < 0:
             raise ValueError("age must be non-negative")
+        self.birth_date = self.birth_date.strip()
+        self.phone = self.phone.strip()
+        self.id_card = self.id_card.strip()
         self.risk_level = _normalize_text(self.risk_level, "risk_level")
+        self.status = _normalize_text(self.status, "status")
+        self.station_id = _normalize_text(self.station_id, "station_id")
         if not isinstance(self.stay_info, StayInfo):
             raise TypeError("stay_info must be a StayInfo instance")
         self.family_contacts = [contact if isinstance(contact, FamilyContact) else FamilyContact(**contact) for contact in self.family_contacts]
@@ -83,10 +95,14 @@ class ElderProfile:
             "elder_id": self.elder_id,
             "elder_code": self.elder_code,
             "full_name": self.full_name,
+            "gender": self.gender,
             "age": self.age,
+            "birth_date": self.birth_date,
+            "phone": self.phone,
+            "id_card": self.id_card,
             "risk_level": self.risk_level,
-            "is_high_risk": self.is_high_risk(),
+            "status": self.status,
+            "station_id": self.station_id,
             "stay_info": self.stay_info.to_dict(),
             "family_contacts": [contact.to_dict() for contact in self.family_contacts],
-            "current_stay_status": self.stay_info.check_in_status,
         }

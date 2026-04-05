@@ -1,0 +1,43 @@
+{
+  "updated_at": "2026-04-05T20:12:48+08:00",
+  "selected_agent": "PythonAgent",
+  "dispatch_state": "ACTIVE,ACTIVE",
+  "write_scope": "services/python/**; .github/**; deploy/**; scripts/**; Makefile; docs/governance/**",
+  "dependencies": [
+    "ArchAgent"
+  ],
+  "prompt_file": "/Users/baizhiwen/MICROWARE/Git/RegionalHealthPlatform/reports/master-agent/executor/prompts/20260405-200833-PythonAgent.md",
+  "execute_mode": "codex-exec",
+  "failure_control": {
+    "threshold": 3,
+    "cooldown_seconds": 1800,
+    "agents": {
+      "DevOpsAgent": {
+        "consecutive_failures": 0,
+        "breaker_state": "closed",
+        "cooldown_seconds": 1800,
+        "last_success_at": "2026-04-05T20:12:48+08:00"
+      },
+      "PythonAgent": {
+        "consecutive_failures": 0,
+        "breaker_state": "closed",
+        "cooldown_seconds": 1800,
+        "last_success_at": "2026-04-05T20:12:48+08:00"
+      },
+      "FrontAgent": {
+        "consecutive_failures": 0,
+        "breaker_state": "closed",
+        "cooldown_seconds": 1800,
+        "last_success_at": "2026-04-05T18:58:23+08:00"
+      }
+    }
+  },
+  "selected_agents": [
+    "PythonAgent",
+    "DevOpsAgent"
+  ],
+  "prompt_files": [
+    "/Users/baizhiwen/MICROWARE/Git/RegionalHealthPlatform/reports/master-agent/executor/prompts/20260405-200833-PythonAgent.md",
+    "/Users/baizhiwen/MICROWARE/Git/RegionalHealthPlatform/reports/master-agent/executor/prompts/20260405-200833-DevOpsAgent.md"
+  ]
+}

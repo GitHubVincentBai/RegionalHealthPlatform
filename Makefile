@@ -4,7 +4,7 @@ WEB_DIR := $(CURDIR)/apps/web
 PYTHON_ELDER_DIR := $(CURDIR)/services/python/elder-service
 GO_IOT_DIR := $(CURDIR)/services/go/iot-gateway
 
-.PHONY: help format lint test build verify check-docs check-frontend format-web lint-web test-web build-web format-python-elder-service lint-python-elder-service test-python-elder-service build-python-elder-service format-go-iot-gateway lint-go-iot-gateway test-go-iot-gateway build-go-iot-gateway
+.PHONY: help format lint test build verify check-docs check-frontend status-report dispatch-report status-watch auto-drive auto-exec auto-watch auto-reset-circuits launchd-install launchd-uninstall launchd-status prepare-python-elder-service format-web lint-web test-web build-web format-python-elder-service lint-python-elder-service test-python-elder-service build-python-elder-service test-elder-integration-smoke format-go-iot-gateway lint-go-iot-gateway test-go-iot-gateway build-go-iot-gateway
 
 help:
 	@echo "Available targets:"
@@ -13,7 +13,19 @@ help:
 	@echo "  make test         - run tests when a stack exists"
 	@echo "  make build        - run build validation when a stack exists"
 	@echo "  make verify       - run docs, lint, test, and build checks"
+	@echo "  make prepare-python-elder-service - bootstrap the elder-service verify virtualenv"
+	@echo "  make test-elder-integration-smoke - run the first supported Elder MVP smoke asset under tests/integration"
 	@echo "  make check-docs   - verify required governance documents exist"
+	@echo "  make status-report - generate the MasterAgent elder MVP progress report"
+	@echo "  make dispatch-report - generate the MasterAgent work dispatch board"
+	@echo "  make status-watch - regenerate the MasterAgent report every 300 seconds"
+	@echo "  make auto-drive   - refresh reports and generate the next Codex execution prompt"
+	@echo "  make auto-exec    - run one eligible agent automatically through codex exec"
+	@echo "  make auto-watch   - run the auto executor every 300 seconds"
+	@echo "  make auto-reset-circuits - clear executor circuit breakers"
+	@echo "  make launchd-install - install auto-watch as a macOS LaunchAgent"
+	@echo "  make launchd-uninstall - remove the macOS LaunchAgent"
+	@echo "  make launchd-status - inspect the macOS LaunchAgent status"
 
 format:
 	@echo "==> format"
@@ -32,6 +44,7 @@ test:
 	@echo "==> test"
 	@$(MAKE) test-web
 	@$(MAKE) test-python-elder-service
+	@$(MAKE) test-elder-integration-smoke
 	@$(MAKE) test-go-iot-gateway
 
 build:
@@ -77,6 +90,46 @@ check-frontend:
 		echo "[frontend] skipped: $(WEB_DIR)/package.json not found"; \
 	fi
 
+status-report:
+	@echo "==> status-report"
+	@python3 scripts/master_status_report.py
+
+dispatch-report:
+	@echo "==> dispatch-report"
+	@python3 scripts/master_status_report.py --skip-verify
+
+status-watch:
+	@echo "==> status-watch"
+	@python3 scripts/master_status_report.py --watch --interval 300
+
+auto-drive:
+	@echo "==> auto-drive"
+	@python3 scripts/master_auto_executor.py
+
+auto-exec:
+	@echo "==> auto-exec"
+	@python3 scripts/master_auto_executor.py --execute
+
+auto-watch:
+	@echo "==> auto-watch"
+	@python3 scripts/master_auto_executor.py --watch --execute --interval 300
+
+auto-reset-circuits:
+	@echo "==> auto-reset-circuits"
+	@python3 scripts/master_auto_executor.py --reset-all-circuits
+
+launchd-install:
+	@echo "==> launchd-install"
+	@python3 scripts/manage_launch_agent.py --install
+
+launchd-uninstall:
+	@echo "==> launchd-uninstall"
+	@python3 scripts/manage_launch_agent.py --uninstall
+
+launchd-status:
+	@echo "==> launchd-status"
+	@python3 scripts/manage_launch_agent.py --status
+
 format-web:
 	@echo "==> format-web"
 	@if [ -f $(WEB_DIR)/package.json ]; then \
@@ -109,11 +162,18 @@ build-web:
 		echo "[frontend] skipped: $(WEB_DIR)/package.json not found"; \
 	fi
 
+prepare-python-elder-service:
+	@echo "==> prepare-python-elder-service"
+	@if [ -f $(PYTHON_ELDER_DIR)/pyproject.toml ]; then \
+		bash scripts/run_python_elder_checks.sh prepare; \
+	else \
+		echo "[python] skipped: $(PYTHON_ELDER_DIR)/pyproject.toml not found"; \
+	fi
+
 format-python-elder-service:
 	@echo "==> format-python-elder-service"
 	@if [ -f $(PYTHON_ELDER_DIR)/pyproject.toml ]; then \
-		PYTHONPATH=$(PYTHON_ELDER_DIR)/src python3 -m compileall $(PYTHON_ELDER_DIR)/src >/dev/null; \
-		echo "[python] elder-service format check completed"; \
+		bash scripts/run_python_elder_checks.sh format; \
 	else \
 		echo "[python] skipped: $(PYTHON_ELDER_DIR)/pyproject.toml not found"; \
 	fi
@@ -121,8 +181,7 @@ format-python-elder-service:
 lint-python-elder-service:
 	@echo "==> lint-python-elder-service"
 	@if [ -f $(PYTHON_ELDER_DIR)/pyproject.toml ]; then \
-		PYTHONPATH=$(PYTHON_ELDER_DIR)/src python3 -m unittest discover -s $(PYTHON_ELDER_DIR)/tests >/dev/null; \
-		echo "[python] elder-service lint proxy check completed"; \
+		bash scripts/run_python_elder_checks.sh lint; \
 	else \
 		echo "[python] skipped: $(PYTHON_ELDER_DIR)/pyproject.toml not found"; \
 	fi
@@ -130,15 +189,23 @@ lint-python-elder-service:
 test-python-elder-service:
 	@echo "==> test-python-elder-service"
 	@if [ -f $(PYTHON_ELDER_DIR)/pyproject.toml ]; then \
-		PYTHONPATH=$(PYTHON_ELDER_DIR)/src python3 -m unittest discover -s $(PYTHON_ELDER_DIR)/tests; \
+		bash scripts/run_python_elder_checks.sh test; \
 	else \
 		echo "[python] skipped: $(PYTHON_ELDER_DIR)/pyproject.toml not found"; \
+	fi
+
+test-elder-integration-smoke:
+	@echo "==> test-elder-integration-smoke"
+	@if [ -f $(PYTHON_ELDER_DIR)/pyproject.toml ]; then \
+		bash scripts/run_python_elder_checks.sh smoke; \
+	else \
+		echo "[smoke] skipped: $(PYTHON_ELDER_DIR)/pyproject.toml not found"; \
 	fi
 
 build-python-elder-service:
 	@echo "==> build-python-elder-service"
 	@if [ -f $(PYTHON_ELDER_DIR)/pyproject.toml ]; then \
-		PYTHONPATH=$(PYTHON_ELDER_DIR)/src python3 -c "from elder_service.service import create_elder_profile; p=create_elder_profile('E-100','王五',82,'high'); print(p.risk_level)"; \
+		bash scripts/run_python_elder_checks.sh build; \
 	else \
 		echo "[python] skipped: $(PYTHON_ELDER_DIR)/pyproject.toml not found"; \
 	fi

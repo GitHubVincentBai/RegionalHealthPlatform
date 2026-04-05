@@ -4,7 +4,23 @@ const emit = defineEmits(["back"]);
 defineProps({
   elder: {
     type: Object,
-    required: true,
+    default: null,
+  },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  errorMessage: {
+    type: String,
+    default: "",
+  },
+  dataSource: {
+    type: String,
+    default: "api",
+  },
+  syncWarning: {
+    type: String,
+    default: "",
   },
 });
 </script>
@@ -14,14 +30,18 @@ defineProps({
     <article class="detail-hero">
       <div>
         <p class="eyebrow">长者详情</p>
-        <h2>{{ elder.fullName }}</h2>
+        <h2>{{ elder?.fullName || "长者详情待加载" }}</h2>
         <p class="summary">
-          {{ elder.elderCode }} · {{ elder.gender }} · {{ elder.age }} 岁 · {{ elder.status }}
+          {{
+            elder
+              ? `${elder.elderCode} · ${elder.gender} · ${elder.age} 岁 · ${elder.status}`
+              : "点击档案列表后会通过 elder-service 获取详情。"
+          }}
         </p>
       </div>
       <div class="detail-hero__tags">
-        <span class="pill pill-accent">{{ elder.riskLevel }}</span>
-        <span class="pill">{{ elder.station }}</span>
+        <span class="pill pill-accent">{{ elder?.riskLevel || "待补充" }}</span>
+        <span class="pill">{{ dataSource === "mock" ? "Mock Fallback" : "elder-service" }}</span>
       </div>
     </article>
 
@@ -31,7 +51,11 @@ defineProps({
       </button>
     </div>
 
-    <section class="content-grid">
+    <p v-if="syncWarning" class="info-banner info-banner--warning">{{ syncWarning }}</p>
+    <p v-if="errorMessage" class="info-banner info-banner--danger">{{ errorMessage }}</p>
+    <p v-if="loading" class="info-banner">正在获取长者详情...</p>
+
+    <section v-if="elder" class="content-grid">
       <article class="detail-panel">
         <h3>基础信息</h3>
         <dl class="detail-dl">
@@ -66,11 +90,20 @@ defineProps({
             <dd>{{ elder.familyRelation }}</dd>
           </div>
           <div>
+            <dt>联系电话</dt>
+            <dd>{{ elder.familyPhone }}</dd>
+          </div>
+          <div>
             <dt>备注</dt>
             <dd>{{ elder.note }}</dd>
           </div>
         </dl>
       </article>
     </section>
+
+    <article v-else class="detail-panel">
+      <h3>暂无详情</h3>
+      <p class="summary">当前未选中长者，或详情接口尚未返回。</p>
+    </article>
   </section>
 </template>

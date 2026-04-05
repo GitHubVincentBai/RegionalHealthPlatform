@@ -16,12 +16,32 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  selectedElder: {
+    type: Object,
+    default: null,
+  },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  errorMessage: {
+    type: String,
+    default: "",
+  },
+  dataSource: {
+    type: String,
+    default: "api",
+  },
+  syncWarning: {
+    type: String,
+    default: "",
+  },
 });
 
 const emit = defineEmits(["select-elder", "create-draft"]);
 
 const selectedElder = computed(
-  () => props.elders.find((elder) => elder.elderId === props.selectedElderId) ?? props.elders[0],
+  () => props.selectedElder ?? props.elders.find((elder) => elder.elderId === props.selectedElderId) ?? props.elders[0],
 );
 </script>
 
@@ -44,8 +64,20 @@ const selectedElder = computed(
           <button type="button" class="action-button" @click="emit('create-draft')">
             新建长者档案
           </button>
-          <span class="toolbar-hint">当前为本地 mock 数据，后续可直接接真实 API。</span>
+          <span class="toolbar-hint">
+            {{
+              dataSource === "mock"
+                ? "当前为显式 mock 兜底，elder-service 恢复后会回切真实接口。"
+                : "已接入 elder-service create/list/get 最小链路。"
+            }}
+          </span>
         </div>
+
+        <p v-if="syncWarning" class="info-banner info-banner--warning">{{ syncWarning }}</p>
+        <p v-if="errorMessage" class="info-banner info-banner--danger">{{ errorMessage }}</p>
+        <p v-if="loading" class="info-banner">正在同步长者档案...</p>
+
+        <p v-if="!loading && elders.length === 0" class="empty-state">当前没有长者档案数据。</p>
 
         <ul class="archive-list">
           <li
@@ -68,7 +100,7 @@ const selectedElder = computed(
       </SectionCard>
 
       <SectionCard title="入住说明" description="预留床位、家属和签约字段。">
-        <div class="detail-grid">
+        <div v-if="selectedElder" class="detail-grid">
           <div>
             <span class="detail-label">站点</span>
             <strong>{{ selectedElder.station }}</strong>
@@ -83,6 +115,7 @@ const selectedElder = computed(
             <small>{{ selectedElder.familyRelation }}</small>
           </div>
         </div>
+        <p v-else class="empty-state">请选择一条长者档案查看入住摘要。</p>
       </SectionCard>
     </section>
   </section>

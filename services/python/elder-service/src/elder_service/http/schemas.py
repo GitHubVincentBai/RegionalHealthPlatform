@@ -1,11 +1,18 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from elder_service.domain.models import ElderProfile, FamilyContact, StayInfo
+from elder_service.http.examples import (
+    ELDER_PROFILE_CREATE_EXAMPLE,
+    ELDER_PROFILE_LIST_EXAMPLE,
+    ELDER_PROFILE_RESPONSE_EXAMPLE,
+)
 
 
 class FamilyContactRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     family_name: str = Field(min_length=1)
     relation_type: str = Field(min_length=1)
     phone: str = Field(min_length=1)
@@ -37,6 +44,8 @@ class FamilyContactResponse(BaseModel):
 
 
 class StayInfoRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     check_in_status: str = Field(default="pre_admission", min_length=1)
     room_id: str = ""
     bed_id: str = ""
@@ -72,25 +81,42 @@ class StayInfoResponse(BaseModel):
 
 
 class ElderProfileCreateRequest(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={"example": ELDER_PROFILE_CREATE_EXAMPLE},
+    )
+
     elder_id: str = Field(min_length=1)
     elder_code: str | None = Field(default=None, min_length=1)
     full_name: str = Field(min_length=1)
+    gender: str = Field(default="unknown", min_length=1)
     age: int = Field(ge=0)
+    birth_date: str = ""
+    phone: str = ""
+    id_card: str = ""
     risk_level: str = Field(default="medium", min_length=1)
+    status: str = Field(default="active", min_length=1)
+    station_id: str = Field(min_length=1)
     stay_info: StayInfoRequest = Field(default_factory=StayInfoRequest)
     family_contacts: list[FamilyContactRequest] = Field(default_factory=list)
 
 
 class ElderProfileResponse(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"example": ELDER_PROFILE_RESPONSE_EXAMPLE})
+
     elder_id: str
     elder_code: str
     full_name: str
+    gender: str
     age: int
+    birth_date: str
+    phone: str
+    id_card: str
     risk_level: str
-    is_high_risk: bool
+    status: str
+    station_id: str
     stay_info: StayInfoResponse
     family_contacts: list[FamilyContactResponse]
-    current_stay_status: str
 
     @classmethod
     def from_domain(cls, profile: ElderProfile) -> "ElderProfileResponse":
@@ -98,19 +124,25 @@ class ElderProfileResponse(BaseModel):
             elder_id=profile.elder_id,
             elder_code=profile.elder_code,
             full_name=profile.full_name,
+            gender=profile.gender,
             age=profile.age,
+            birth_date=profile.birth_date,
+            phone=profile.phone,
+            id_card=profile.id_card,
             risk_level=profile.risk_level,
-            is_high_risk=profile.is_high_risk(),
+            status=profile.status,
+            station_id=profile.station_id,
             stay_info=StayInfoResponse.from_domain(profile.stay_info),
             family_contacts=[
                 FamilyContactResponse.from_domain(contact)
                 for contact in profile.family_contacts
             ],
-            current_stay_status=profile.stay_info.check_in_status,
         )
 
 
 class ElderProfileListResponse(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"example": ELDER_PROFILE_LIST_EXAMPLE})
+
     items: list[ElderProfileResponse]
     total: int
     page: int

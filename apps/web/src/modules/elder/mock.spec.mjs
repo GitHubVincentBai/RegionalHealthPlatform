@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { createElderDraft, elderArchiveModel } from "./mock.js";
+import { createElderDraft, createMockElder, elderArchiveModel } from "./mock.js";
 
 describe("elderArchiveModel", () => {
   it("returns elder archive data for the intake workflow", () => {
@@ -20,5 +20,16 @@ describe("createElderDraft", () => {
     assert.equal(draft.fullName, "");
     assert.equal(draft.gender, "女");
     assert.equal(draft.riskLevel, "中风险");
+    assert.equal(draft.checkInStatus, "待入住");
+  });
+});
+
+describe("createMockElder", () => {
+  it("creates a mock elder record that can be used by the fallback adapter", () => {
+    const elder = createMockElder({ fullName: "测试长者" });
+
+    assert.equal(elder.fullName, "测试长者");
+    assert.equal(elder.source, "mock");
+    assert.equal(Array.isArray(elder.familyContacts), true);
   });
 });
