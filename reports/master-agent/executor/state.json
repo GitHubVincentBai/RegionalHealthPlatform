@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-05T21:52:56+08:00",
+  "updated_at": "2026-04-07T10:50:19+08:00",
   "selected_agent": null,
   "dispatch_state": null,
   "write_scope": null,
@@ -33,9 +33,16 @@
         "breaker_state": "closed",
         "cooldown_seconds": 1800,
         "last_success_at": "2026-04-05T21:52:03+08:00"
+      },
+      "MasterAgent": {
+        "consecutive_failures": 0,
+        "breaker_state": "closed",
+        "cooldown_seconds": 1800,
+        "last_success_at": "2026-04-05T22:11:28+08:00"
       }
     }
   },
   "selected_agents": [],
-  "prompt_files": []
+  "prompt_files": [],
+  "last_master_fallback_at": "2026-04-05T22:11:28+08:00"
 }
