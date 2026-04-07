@@ -57,7 +57,7 @@ Go 侧优先负责：
 
 ## 七、开发原则
 
-- 先阅读 `docs/product/PRD.md`、`docs/architecture/Arch.md`、`docs/product/Modules.md`
+- 先阅读 `docs/product/PRD.md`、`docs/agents/Arch.md`、`docs/product/Modules.md`
 - 以领域边界拆分 package，不写巨型 util 包
 - 显式处理超时、重试、熔断、幂等、消息重复与无序
 - 优先保证可靠性和可观测性

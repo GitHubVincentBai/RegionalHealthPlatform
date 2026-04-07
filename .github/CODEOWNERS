@@ -4,7 +4,7 @@
 # Core governance documents
 /AGENTS.md @<GITHUB_OWNER>/<ARCH_TEAM>
 /docs/agents/MasterAgent.md @<GITHUB_OWNER>/<ARCH_TEAM>
-/docs/architecture/Arch.md @<GITHUB_OWNER>/<ARCH_TEAM>
+/docs/agents/Arch.md @<GITHUB_OWNER>/<ARCH_TEAM>
 /docs/agents/DevOpsAgent.md @<GITHUB_OWNER>/<DEVOPS_TEAM>
 /docs/agents/FrontAgent.md @<GITHUB_OWNER>/<FRONTEND_TEAM>
 /docs/agents/GoAgent.md @<GITHUB_OWNER>/<GO_TEAM>

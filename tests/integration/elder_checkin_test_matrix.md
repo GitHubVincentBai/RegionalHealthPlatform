@@ -103,6 +103,78 @@
 - 联调阶段可优先做“创建后查询”最小冒烟
 - 回归阶段可优先跑 P0 集合，确保档案主链路不退化
 
+## 6.1 P0 用例到实际资产映射
+
+本轮已把 Elder 入住 MVP 的最小冒烟入口接入仓库统一命令，避免 `make` 只能跳过却无法执行真实资产。
+
+| 编号 | 实际文件 | 覆盖说明 | 执行命令 |
+|---|---|---|---|
+| SMK-00 | `tests/integration/elder_mvp_smoke.sh` | 仓库统一 smoke 入口，桥接到真实 P0 主链路脚本，供 `make test-elder-integration-smoke` 调用 | `make test-elder-integration-smoke` |
+| SMK-01 | `tests/integration/elder_create_query_smoke.sh` | 串联后端服务层与前端适配层的 P0 冒烟，覆盖创建档案后可查询列表/详情的主链路 | `bash tests/integration/elder_create_query_smoke.sh` |
+
+| 编号 | 实际文件 | 覆盖说明 | 执行命令 |
+|---|---|---|---|
+| FE-01 | `apps/web/src/api/adapters/elder-service/flow.spec.mjs` | 通过 `loadArchive()` 断言新建后列表可见姓名、入住状态 | `cd apps/web && node --test ./src/api/adapters/elder-service/flow.spec.mjs` |
+| FE-02 | `apps/web/src/api/adapters/elder-service/flow.spec.mjs` | 通过 `getElder()` 断言详情包含入住与家属信息 | `cd apps/web && node --test ./src/api/adapters/elder-service/flow.spec.mjs` |
+| FE-03 | `apps/web/src/api/adapters/elder-service/archiveService.spec.mjs` | 断言创建草稿可被转换并提交为 elder-service 兼容载荷 | `cd apps/web && node --test ./src/api/adapters/elder-service/archiveService.spec.mjs` |
+| FE-05 | 暂无自动化资产 | 当前前端页面级必填错误提示尚未形成可执行断言入口，需要 FrontAgent 补页面交互测试基座 | 暂无 |
+| BE-01 | `services/python/elder-service/tests/test_service.py` | 应用层最小冒烟覆盖创建后可查列表/详情主链路，断言入住与家属字段不丢失 | `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_service.ElderServiceTest.test_create_list_and_fetch_profile_smoke` |
+| BE-02 | `services/python/elder-service/tests/test_service.py` | 应用层覆盖重复创建抛出 `ElderProfileAlreadyExistsError` | `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_service.ElderServiceTest.test_duplicate_profile_rejected` |
+| BE-03 | `services/python/elder-service/tests/test_service.py` | 应用层覆盖列表查询、过滤与分页 | `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_service.ElderServiceTest.test_list_profiles_supports_filters_and_pagination` |
+| BE-04 | `services/python/elder-service/tests/test_service.py` | 应用层详情查询返回完整档案字段 | `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_service.ElderServiceTest.test_create_list_and_fetch_profile_smoke` |
+| BE-05 | `services/python/elder-service/tests/test_service.py` | 应用层覆盖 `elder_id`、`full_name` 缺失触发校验错误 | `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_service.ElderServiceTest.test_required_fields_raise_value_error` |
+| IT-01 | `services/python/elder-service/tests/test_service.py` | 后端最小冒烟资产，覆盖创建后立即查询列表与详情 | `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_service.ElderServiceTest.test_create_list_and_fetch_profile_smoke` |
+| IT-02 | `apps/web/src/api/adapters/elder-service/flow.spec.mjs` | 前端服务层冒烟，覆盖创建后刷新列表即可看到新档案 | `cd apps/web && node --test ./src/api/adapters/elder-service/flow.spec.mjs` |
+| RG-01 | `services/python/elder-service/tests/test_service.py` | 防止创建接口与查询接口字段脱节 | `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_service.ElderServiceTest.test_create_list_and_fetch_profile_smoke` |
+| RG-02 | `apps/web/src/api/adapters/elder-service/archiveService.spec.mjs` | 防止入住字段存在时档案列表映射退化 | `cd apps/web && node --test ./src/api/adapters/elder-service/archiveService.spec.mjs` |
+| RG-04 | `services/python/elder-service/tests/test_service.py` | 防止必填校验失效 | `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_service.ElderServiceTest.test_required_fields_raise_value_error` |
+
+## 6.2 补充 HTTP 资产
+
+以下真实 HTTP 资产已补齐在仓库内，适合依赖安装完整时追加执行：
+
+| 编号 | 实际文件 | 覆盖说明 | 执行命令 |
+|---|---|---|---|
+| HTTP-01 | `services/python/elder-service/tests/test_http.py` | 真实 HTTP 接口覆盖创建后可查列表/详情主链路 | `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_http.ElderHttpApiTest.test_create_list_and_fetch_profile` |
+| HTTP-02 | `services/python/elder-service/tests/test_http.py` | 真实 HTTP 接口覆盖重复创建返回 `409` | `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_http.ElderHttpApiTest.test_duplicate_profile_returns_409` |
+| HTTP-03 | `services/python/elder-service/tests/test_http.py` | 真实 HTTP 接口覆盖列表查询、过滤与分页 | `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_http.ElderHttpApiTest.test_list_endpoint_supports_filters_and_pagination` |
+| HTTP-04 | `services/python/elder-service/tests/test_http.py` | 真实 HTTP 接口覆盖必填字段缺失返回 `422` | `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_http.ElderHttpApiTest.test_missing_required_fields_return_422` |
+
+## 6.3 本轮执行记录
+
+执行时间：
+
+- 2026-04-05
+
+执行命令：
+
+- `make test-elder-integration-smoke`
+- `bash tests/integration/elder_create_query_smoke.sh`
+- `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_service.ElderServiceTest.test_create_list_and_fetch_profile_smoke tests.test_service.ElderServiceTest.test_duplicate_profile_rejected tests.test_service.ElderServiceTest.test_required_fields_raise_value_error tests.test_service.ElderServiceTest.test_list_profiles_supports_filters_and_pagination`
+- `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_http`
+- `cd apps/web && node --test ./src/api/adapters/elder-service/flow.spec.mjs ./src/api/adapters/elder-service/archiveService.spec.mjs`
+
+执行目的：
+
+- 验证后端最小冒烟资产已覆盖创建后列表/详情查询
+- 验证真实 HTTP 资产在依赖不完整时会显式跳过，不再因导入失败阻断测试发现
+- 验证前端 elder-service 适配层已覆盖创建后列表刷新与详情读取
+
+执行结果：
+
+- `make test-elder-integration-smoke`
+  结果：已补齐统一入口后通过；`make` 现已执行 `tests/integration/elder_mvp_smoke.sh`，不再因找不到资产而跳过
+- `bash tests/integration/elder_create_query_smoke.sh`
+  结果：通过；聚合验证后端创建后查列表/详情，以及前端适配层创建后列表刷新与详情读取主链路
+- `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_service.ElderServiceTest.test_create_list_and_fetch_profile_smoke tests.test_service.ElderServiceTest.test_duplicate_profile_rejected tests.test_service.ElderServiceTest.test_required_fields_raise_value_error tests.test_service.ElderServiceTest.test_list_profiles_supports_filters_and_pagination`
+  结果：通过（4/4）
+- `cd services/python/elder-service && PYTHONPATH=src python3 -m unittest tests.test_http`
+  结果：跳过（0 失败，7 跳过）；当前执行环境缺少 `fastapi` 运行依赖，已显式标注为环境依赖
+- `cd apps/web && node --test ./src/api/adapters/elder-service/flow.spec.mjs ./src/api/adapters/elder-service/archiveService.spec.mjs`
+  结果：通过（7/7）
+- `make verify`
+  结果：阻塞；`lint-web` 已通过，但 `lint-python-elder-service` 在无外网环境下同步 Python 依赖失败，`pip` 无法拉取 `setuptools`
+
 ## 7. 未覆盖风险
 
 - 入住状态机未完全成型前，状态流转的完整性无法一次覆盖
@@ -111,4 +183,7 @@
 
 ## 8. 备注
 
-本文件仅定义测试资产与优先级，不代表已执行结果。任何执行结果都应由后续测试运行记录单独产出，不应在此文件中伪造或默认通过。
+本文件当前同时承担两部分职责：
+
+- 维护 Elder 入住首批测试矩阵、P0 资产映射和执行命令
+- 记录本轮已实际执行的最小验证结果；后续若资产或结果发生变化，应同步更新本节，避免“文档有矩阵但仓库无可执行结果”

@@ -19,7 +19,7 @@
 
 ## 三、你的职责
 
-- 根据 `docs/product/PRD.md`、`docs/architecture/Arch.md`、`docs/product/Modules.md` 完成前端方案设计与页面实现
+- 根据 `docs/product/PRD.md`、`docs/agents/Arch.md`、`docs/product/Modules.md` 完成前端方案设计与页面实现
 - 输出可运行、可维护、可复用的前端代码
 - 保持多角色、多端体验一致
 - 与 Python、Go 后端接口契约协同

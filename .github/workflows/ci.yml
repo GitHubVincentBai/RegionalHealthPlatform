@@ -2,6 +2,13 @@ name: CI
 
 on:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      run_init_elder_db:
+        description: "Run manual elder-service PostgreSQL schema initialization job"
+        required: false
+        default: false
+        type: boolean
   push:
     branches:
       - main
@@ -10,6 +17,8 @@ on:
       - "refactor/**"
       - "docs/**"
       - "chore/**"
+  schedule:
+    - cron: "0 */6 * * *"
 
 jobs:
   verify:
@@ -38,28 +47,71 @@ jobs:
         with:
           go-version-file: services/go/iot-gateway/go.mod
 
-      - name: Verify Frontend Skeleton
-        if: ${{ hashFiles('apps/web/package.json') != '' }}
-        run: |
-          npm --prefix apps/web run format
-          npm --prefix apps/web run lint
-          npm --prefix apps/web run test
-          npm --prefix apps/web run build
-
-      - name: Verify Python Skeleton
-        if: ${{ hashFiles('services/python/elder-service/pyproject.toml') != '' }}
-        run: |
-          PYTHONPATH=services/python/elder-service/src python -m compileall services/python/elder-service/src
-          PYTHONPATH=services/python/elder-service/src python -m unittest discover -s services/python/elder-service/tests
-
-      - name: Verify Go Skeleton
-        if: ${{ hashFiles('services/go/iot-gateway/go.mod') != '' }}
-        run: |
-          cd services/go/iot-gateway
-          gofmt -w $(find . -name '*.go' -type f)
-          go vet ./...
-          go test ./...
-          go build ./...
-
       - name: Run unified verification
+        id: verify
         run: make verify
+
+      - name: Refresh MasterAgent supervision reports
+        if: always()
+        run: |
+          status="失败"
+          summary="CI job 执行 make verify 失败。"
+          if [ "${{ steps.verify.outcome }}" = "success" ]; then
+            status="通过"
+            summary="CI job 已完成 make verify，并刷新监督与派工产物。"
+          fi
+          make refresh-supervision VERIFY_STATUS="${status}" VERIFY_SUMMARY="${summary}"
+
+      - name: Upload supervision artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: master-agent-reports
+          path: |
+            reports/master-agent/elder_mvp_status.md
+            reports/master-agent/elder_mvp_dispatch.md
+            reports/master-agent/dispatch
+          if-no-files-found: warn
+
+  init-elder-db:
+    name: Init Elder DB Schema (Manual)
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_init_elder_db == true }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: elder_service
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d elder_service"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Wait for PostgreSQL service
+        run: |
+          for i in $(seq 1 30); do
+            pg_isready -h 127.0.0.1 -p 5432 -U postgres -d elder_service && exit 0
+            sleep 2
+          done
+          echo "PostgreSQL service did not become ready in time" >&2
+          exit 1
+        env:
+          PGPASSWORD: postgres
+
+      - name: Initialize elder-service schema
+        run: make init-elder-db
+        env:
+          ELDER_SERVICE_DB_HOST: 127.0.0.1
+          ELDER_SERVICE_DB_PORT: "5432"
+          ELDER_SERVICE_DB_NAME: elder_service
+          ELDER_SERVICE_DB_USER: postgres
+          ELDER_SERVICE_DB_PASSWORD: postgres

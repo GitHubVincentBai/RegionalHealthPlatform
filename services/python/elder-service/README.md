@@ -23,6 +23,8 @@ PYTHONPATH=src python -m elder_service
 ```
 
 The service uses `uvicorn` behind the `elder_service.http.server:app` entrypoint.
+At runtime, the default repository is a PostgreSQL-backed repository rather than
+an in-memory store.
 
 Current HTTP API:
 
@@ -31,8 +33,170 @@ Current HTTP API:
 - `POST /elders`
 - `GET /elders/<elder_id>`
 
+Install runtime and test dependencies:
+
+```bash
+python3 -m pip install -e ".[test]"
+```
+
+Default PostgreSQL environment variables:
+
+```bash
+export ELDER_SERVICE_DB_HOST=127.0.0.1
+export ELDER_SERVICE_DB_PORT=5432
+export ELDER_SERVICE_DB_NAME=regional_health_elder
+export ELDER_SERVICE_DB_USER="${USER}"
+export ELDER_SERVICE_DB_PASSWORD=
+export ELDER_SERVICE_DB_SSLMODE=disable
+```
+
+Initialize the database, Elder MVP tables, and the current联调 demo data explicitly:
+
+```bash
+bash services/python/elder-service/scripts/init_postgres_database.sh
+bash services/python/elder-service/scripts/init_postgres_schema.sh
+bash services/python/elder-service/scripts/seed_postgres_demo_data.sh
+```
+
+SQL file locations:
+
+- `services/python/elder-service/sql/000_regional_health_elder_database.sql`
+- `services/python/elder-service/sql/001_elder_mvp_schema.sql`
+- `services/python/elder-service/sql/002_elder_mvp_seed.sql`
+
+Shell entrypoints:
+
+- `services/python/elder-service/scripts/init_postgres_database.sh`
+- `services/python/elder-service/scripts/init_postgres_schema.sh`
+- `services/python/elder-service/scripts/seed_postgres_demo_data.sh`
+
+The checked-in seed SQL mirrors the current live `regional_health_elder` demo
+dataset used for end-to-end verification:
+
+- `13` elder profiles
+- `13` primary family contacts
+- includes `E-9031 / EC-9031 / 前端新录入老人31`, which was created through the frontend proxy path
+
+You can also provide a single `ELDER_SERVICE_DB_DSN` or `DATABASE_URL`.
+The service will create the required Elder MVP tables automatically on first use.
+
+`.[test]` is the expected local entry for the HTTP suite. The service uses
+`unittest`, but the runtime dependencies required by `fastapi.testclient`
+must already exist in that environment.
+For repository-level verification, treat `services/python/elder-service/.venv`
+bootstrapped by `bash scripts/run_python_elder_checks.sh test` as the canonical
+environment instead of relying on host Python packages.
+
 Run locally:
 
 ```bash
 PYTHONPATH=src python3 -m elder_service
 ```
+
+Run tests from either the repository root or the service directory:
+
+```bash
+bash scripts/run_python_elder_checks.sh test
+cd services/python/elder-service && ./.venv/bin/python -m unittest tests.test_service tests.test_http
+```
+
+Running `python3 -m unittest tests.test_service tests.test_http` directly on the
+host interpreter is only expected to work after that interpreter has installed
+`.[test]`; otherwise the HTTP suite will fail fast on missing `fastapi`.
+
+Repository-level verification still uses:
+
+```bash
+bash scripts/run_python_elder_checks.sh test
+bash scripts/run_python_elder_checks.sh smoke
+```
+
+Stable `POST /elders` example payload:
+
+```json
+{
+  "elder_id": "E-100",
+  "elder_code": "EC-100",
+  "full_name": "赵六",
+  "gender": "male",
+  "age": 78,
+  "birth_date": "1947-08-16",
+  "phone": "13900000001",
+  "id_card": "210102194708160011",
+  "risk_level": "critical",
+  "status": "active",
+  "station_id": "station-heping-001",
+  "stay_info": {
+    "check_in_status": "checked_in",
+    "room_id": "3B",
+    "bed_id": "3B-08",
+    "check_in_date": "2026-04-05",
+    "notes": "corner bed"
+  },
+  "family_contacts": [
+    {
+      "family_name": "赵家属",
+      "relation_type": "child",
+      "phone": "13900000000",
+      "is_primary_contact": true
+    },
+    {
+      "family_name": "赵配偶",
+      "relation_type": "spouse",
+      "phone": "13800000009",
+      "is_primary_contact": false
+    }
+  ]
+}
+```
+
+The code-level source of truth for FrontAgent sample payloads lives in
+`src/elder_service/http/examples.py`, including:
+
+- `ELDER_PROFILE_CREATE_EXAMPLE` for `POST /elders`
+- `ELDER_PROFILE_RESPONSE_EXAMPLE` for `GET /elders/{elder_id}`
+- `ELDER_PROFILE_LIST_EXAMPLE` for `GET /elders`
+
+OpenAPI exposes the same examples through the request and response schemas.
+
+`POST /elders` accepts `age` or `birth_date`; at least one of the two must be
+present. The stable example keeps both fields so FrontAgent can cover
+`family_contacts`、`stay_info`、`room_id`、`bed_id` against a complete payload.
+For the MVP contract, `stay_info.check_in_status` may be submitted on its own;
+`room_id`、`bed_id`、`check_in_date` remain optional fields in the create, list,
+and detail payloads.
+When present, `birth_date` and `stay_info.check_in_date` must use `YYYY-MM-DD`.
+
+Canonical local verification for this service is:
+
+```bash
+bash scripts/run_python_elder_checks.sh test
+```
+
+That entry bootstraps and reuses `services/python/elder-service/.venv`, installs
+`-e ".[test]"` when the runtime imports are missing, and runs the service plus
+HTTP suites from the same isolated environment used by repository-level checks.
+
+`POST /elders`、`GET /elders` 列表项、`GET /elders/{elder_id}` 详情统一返回以下任务包字段：
+
+- `elder_id`
+- `elder_code`
+- `full_name`
+- `gender`
+- `age`
+- `birth_date`
+- `phone`
+- `id_card`
+- `risk_level`
+- `status`
+- `station_id`
+- `stay_info.check_in_status`
+- `stay_info.admission_id`
+- `stay_info.room_id`
+- `stay_info.bed_id`
+- `stay_info.check_in_date`
+- `stay_info.notes`
+- `family_contacts[].family_name`
+- `family_contacts[].relation_type`
+- `family_contacts[].phone`
+- `family_contacts[].is_primary_contact`

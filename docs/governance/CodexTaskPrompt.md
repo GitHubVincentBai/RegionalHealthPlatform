@@ -12,21 +12,28 @@ Use this template when assigning a concrete task to Codex. Replace placeholders 
 1. 先阅读并遵守以下文档：
    - docs/agents/MasterAgent.md
    - AGENTS.md
-   - 与任务相关的专项文档，如 docs/architecture/Arch.md / docs/agents/FrontAgent.md / docs/agents/GoAgent.md / docs/agents/PythonAgent.md / docs/agents/DevOpsAgent.md / docs/agents/TestAgent.md
+   - 与任务相关的专项文档，如 docs/agents/Arch.md / docs/agents/FrontAgent.md / docs/agents/GoAgent.md / docs/agents/PythonAgent.md / docs/agents/DevOpsAgent.md / docs/agents/TestAgent.md
 2. 先理解现有代码和文档，再实施修改。
 3. 采用最小可行改动，不做无边界重构。
 4. 如果改动影响行为、接口、规则或页面，补充或更新测试。
-5. 修改完成后执行相关验证，优先使用：
+5. 在开始编码前先做“输入需求 md 分解正确性检查”，输出“需求点 -> 子任务 -> 负责人 -> 验收标准”映射。
+6. 修改完成后做“任务匹配完成度检查”，输出“需求点 -> 代码文件/测试文件/验证结果”映射，明确是否有漏项或越界项。
+7. 修改完成后执行相关验证，优先使用：
    - make lint
    - make test
    - make build
    - make verify
-6. 如果检查失败，先修复再继续。
-7. 输出时必须说明：
+8. 如果检查失败，先修复再继续。
+9. 输出时必须说明：
    - 任务理解
+   - 输入需求 md 分解正确性检查结论
+   - 代码任务与输入需求 md 匹配完成度结论
    - 实际修改了哪些文件
    - 做了哪些验证
    - 还剩哪些风险或假设
+
+输入需求 md：
+<请填写需求 markdown 文件路径，例如 docs/product/Elder入住首批任务包.md>
 
 任务背景：
 <请填写业务背景、Issue 或需求链接>
